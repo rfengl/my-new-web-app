@@ -78,6 +78,7 @@ Defined in `client/src/App.jsx`:
 | `/cases` | `CaseListing` | Protected |
 | `/cases/new` | `CaseForm` | Protected |
 | `/cases/:id/edit` | `CaseForm` | Protected |
+| `/guide` | `UserGuide` | Protected |
 | `*` | — | Redirects to `/cases` |
 
 ## Pages
@@ -87,6 +88,9 @@ Sign-in form with email + password fields. Validates against mock credentials (`
 
 ### Case Listing — `client/src/pages/CaseListing.jsx`
 Main authenticated view. Displays a table of cases with columns: Case #, Title, Priority, Status, Date, and an Edit link per row. **New Case** button navigates to `/cases/new`. Each row's Edit link navigates to `/cases/:id/edit`. Reads case data from `CasesContext`.
+
+### User Guide — `client/src/pages/UserGuide.jsx`
+In-app user guide at `/guide`. Linked from the **Help** button in the Case Listing header. Contains a sticky sidebar table of contents and six sections covering: accessing the portal, logging in, viewing cases, creating a case, editing a case, and logging out. All content mirrors `USER_GUIDE.md`.
 
 ### Case Form — `client/src/pages/CaseForm.jsx`
 Reusable create/edit form. Operates in two modes:

@@ -89,6 +89,11 @@ npm run preview    # serve the production build locally
 - **New Case** button — navigates to the case form
 - **Edit** button per row — opens the case form pre-populated
 
+### User Guide
+- In-app guide accessible via the **Help** button in the header
+- Sticky sidebar table of contents
+- Covers login, case listing, create, edit, and logout
+
 ### Case Form (Create & Edit)
 - Shared page used for both creating and editing a case
 - Fields: Title, Description, Status, Priority
