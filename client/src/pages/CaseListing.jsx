@@ -101,8 +101,14 @@ export default function CaseListing() {
                   <td className="px-5 py-3.5 text-right">
                     <button
                       onClick={() => navigate(`/cases/${c.id}/edit`)}
-                      className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-slate-600
+                                 border border-slate-300 rounded-md px-2.5 py-1
+                                 hover:bg-slate-100 transition-colors"
                     >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                       Edit
                     </button>
                   </td>
