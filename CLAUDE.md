@@ -28,6 +28,35 @@ npm run preview   # preview production build
 - Backend env vars via `appsettings.json` / `appsettings.Development.json` + `IConfiguration`
 - Database: PostgreSQL or MongoDB (to be decided)
 
+## Backend Commands
+
+```bash
+cd server/CasePortal.Api
+dotnet build          # compile
+dotnet run            # start API at http://localhost:5XXX (port shown in terminal)
+dotnet watch          # hot-reload dev server
+```
+
+Swagger UI is available at `/swagger` when running in Development mode.
+
+## Backend Architecture
+
+```
+server/CasePortal.Api/
+├── Controllers/          # AuthController, CasesController
+├── Models/
+│   ├── Case.cs           # Core entity
+│   ├── Requests/         # LoginRequest, CreateCaseRequest, UpdateCaseRequest
+│   └── Responses/        # LoginResponse, ApiError
+├── Services/             # IAuthService/AuthService, ICaseService/CaseService
+├── Program.cs            # DI, JWT, CORS, middleware pipeline
+└── appsettings.json      # Jwt:Key, Jwt:Issuer, Jwt:Audience
+```
+
+- Services are registered as **singletons** — the in-memory `List<Case>` lives for the app lifetime. Replace with a DB repository when ready.
+- JWT secret is in `appsettings.json` under `Jwt:Key` — use User Secrets or environment variables in production.
+- CORS is open to `http://localhost:5173` (Vite dev server) in all environments. Lock this down for production.
+
 ## Testing
 
 ```bash

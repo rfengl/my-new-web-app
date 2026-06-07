@@ -57,6 +57,19 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 > **Demo credentials:** `admin@example.com` / `password123`
 
+### Backend
+
+```bash
+cd server/CasePortal.Api
+dotnet run      # starts at http://localhost:5XXX (port shown in terminal)
+dotnet watch    # hot-reload dev mode
+```
+
+Swagger UI is available at `/swagger` in Development mode.
+
+> **Demo credentials:** `admin@example.com` / `password123`  
+> **JWT secret:** update `Jwt:Key` in `appsettings.json` before deploying.
+
 ### Run tests
 
 ```bash
