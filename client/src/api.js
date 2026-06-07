@@ -14,9 +14,15 @@ async function request(method, path, body) {
     headers: headers(),
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
+
   if (res.status === 204) return null
-  const data = await res.json()
-  if (!res.ok) throw data   // shape: { code, message }
+
+  const isJson = res.headers.get('content-type')?.includes('application/json')
+  const data = isJson ? await res.json() : null
+
+  if (!res.ok) {
+    throw data ?? { code: 'ERROR', message: `Request failed with status ${res.status}` }
+  }
   return data
 }
 
