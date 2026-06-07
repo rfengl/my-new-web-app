@@ -46,6 +46,13 @@ npm run preview   # preview production build
 - Logout clears the token and redirects to `/login`.
 - Currently uses mock credentials — replace with real API calls when the backend is ready.
 
+## State Management
+
+Cases are managed via `CasesContext` (`src/context/CasesContext.jsx`):
+- Persists to `localStorage` under the key `cases`.
+- Provides: `cases`, `addCase(data)`, `updateCase(id, data)`, `getCaseById(id)`.
+- Wrap any new page that needs case data with `useCases()` — the provider is mounted at the root in `App.jsx`.
+
 ## Routing
 
 Defined in `client/src/App.jsx`:
@@ -54,6 +61,8 @@ Defined in `client/src/App.jsx`:
 |---|---|---|
 | `/login` | `Login` | Public |
 | `/cases` | `CaseListing` | Protected |
+| `/cases/new` | `CaseForm` | Protected |
+| `/cases/:id/edit` | `CaseForm` | Protected |
 | `*` | — | Redirects to `/cases` |
 
 ## Pages
@@ -62,4 +71,11 @@ Defined in `client/src/App.jsx`:
 Sign-in form with email + password fields. Validates against mock credentials (`admin@example.com` / `password123`). On success, writes `auth_token` to `localStorage` and navigates to `/cases`. Shows an inline error banner on failure.
 
 ### Case Listing — `client/src/pages/CaseListing.jsx`
-Main authenticated view. Displays a table of cases (Case #, Title, Status, Date). Header contains the app logo and a logout button. **New Case** button opens a modal (`NewCaseModal`) where the user sets a title and status; the new case is prepended to the list with an auto-incremented ID.
+Main authenticated view. Displays a table of cases with columns: Case #, Title, Priority, Status, Date, and an Edit link per row. **New Case** button navigates to `/cases/new`. Each row's Edit link navigates to `/cases/:id/edit`. Reads case data from `CasesContext`.
+
+### Case Form — `client/src/pages/CaseForm.jsx`
+Reusable create/edit form. Operates in two modes:
+- **Create** (`/cases/new`): blank form; calls `addCase()` on submit.
+- **Edit** (`/cases/:id/edit`): pre-populates from `getCaseById(id)`; calls `updateCase()` on submit.
+
+Fields: Title (required), Description, Status (`Open` / `In Progress` / `Closed`), Priority (`Low` / `Medium` / `High`). Back arrow and Cancel both return to `/cases`.
