@@ -28,6 +28,16 @@ npm run preview   # preview production build
 - Backend env vars via `appsettings.json` / `appsettings.Development.json` + `IConfiguration`
 - Database: PostgreSQL or MongoDB (to be decided)
 
+## Testing
+
+```bash
+cd client
+npm test          # watch mode
+npm run test:run  # single run (CI)
+```
+
+Tests live in `client/src/test/`. Each page has its own test file. The setup file is `src/test/setup.js` (imports `@testing-library/jest-dom`).
+
 ## Frontend Modules
 
 | Module | Version | Purpose |
@@ -38,6 +48,11 @@ npm run preview   # preview production build
 | `tailwindcss` | ^4.0 | Utility-first styling |
 | `@tailwindcss/vite` | ^4.0 | Tailwind v4 Vite plugin |
 | `@vitejs/plugin-react` | ^4.3 | React fast-refresh via Vite |
+| `vitest` | ^3.2 | Test runner (Vite-native) |
+| `@testing-library/react` | ^16.3 | Component rendering in tests |
+| `@testing-library/user-event` | ^14.5 | Realistic user interaction simulation |
+| `@testing-library/jest-dom` | ^6.6 | Custom DOM matchers (`toBeInTheDocument`, etc.) |
+| `jsdom` | ^26 | Browser-like DOM environment for Vitest |
 
 ## Auth Flow
 

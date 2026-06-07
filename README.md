@@ -57,6 +57,14 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 > **Demo credentials:** `admin@example.com` / `password123`
 
+### Run tests
+
+```bash
+cd client
+npm run test:run   # single run
+npm test           # watch mode
+```
+
 ### Build for production
 
 ```bash
