@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCases } from '../context/CasesContext'
 
@@ -15,7 +16,18 @@ const PRIORITY_STYLES = {
 
 export default function CaseListing() {
   const navigate = useNavigate()
-  const { cases, loading, error, refresh } = useCases()
+  const { cases, loading, error, deleteCase, refresh } = useCases()
+  const [deleting, setDeleting] = useState(new Set())
+
+  const handleDelete = async (id) => {
+    if (!window.confirm(`Delete case ${id}? This cannot be undone.`)) return
+    setDeleting(prev => new Set([...prev, id]))
+    try {
+      await deleteCase(id)
+    } finally {
+      setDeleting(prev => { const s = new Set(prev); s.delete(id); return s })
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
@@ -132,18 +144,33 @@ export default function CaseListing() {
                   </td>
                   <td className="px-5 py-3.5 text-slate-400">{c.date}</td>
                   <td className="px-5 py-3.5 text-right">
-                    <button
-                      onClick={() => navigate(`/cases/${c.id}/edit`)}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-slate-600
-                                 border border-slate-300 rounded-md px-2.5 py-1
-                                 hover:bg-slate-100 transition-colors"
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </button>
+                    <div className="inline-flex items-center gap-2">
+                      <button
+                        onClick={() => navigate(`/cases/${c.id}/edit`)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-slate-600
+                                   border border-slate-300 rounded-md px-2.5 py-1
+                                   hover:bg-slate-100 transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        disabled={deleting.has(c.id)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-red-600
+                                   border border-red-200 rounded-md px-2.5 py-1
+                                   hover:bg-red-50 disabled:opacity-50 transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        {deleting.has(c.id) ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

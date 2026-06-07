@@ -34,8 +34,13 @@ export function CasesProvider({ children }) {
     setCases(prev => prev.map(c => c.id === id ? updated : c))
   }
 
+  const deleteCase = async (id) => {
+    await api.del(`/api/cases/${id}`)
+    setCases(prev => prev.filter(c => c.id !== id))
+  }
+
   return (
-    <CasesContext.Provider value={{ cases, loading, error, addCase, updateCase, refresh: fetchCases }}>
+    <CasesContext.Provider value={{ cases, loading, error, addCase, updateCase, deleteCase, refresh: fetchCases }}>
       {children}
     </CasesContext.Provider>
   )

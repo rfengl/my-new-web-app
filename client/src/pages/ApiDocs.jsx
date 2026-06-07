@@ -147,7 +147,15 @@ export default function ApiDocs() {
 
               <div>
                 <SubHeading>Base URL</SubHeading>
-                <Code>{`https://your-domain.com/api/v1`}</Code>
+                <Code>{`http://localhost:5003   (development)`}</Code>
+                <p className="text-xs text-slate-400 mt-1">
+                  Interactive Swagger UI is available at{' '}
+                  <a href="http://localhost:5003/swagger" target="_blank" rel="noreferrer"
+                    className="underline hover:text-slate-600">
+                    http://localhost:5003/swagger
+                  </a>{' '}
+                  while the backend is running in development mode.
+                </p>
               </div>
 
               <div>
@@ -156,7 +164,7 @@ export default function ApiDocs() {
                   ['Content-Type',  'string', 'Yes', 'Must be application/json'],
                   ['Authorization', 'string', 'Yes*','Bearer <token> — required for all protected endpoints'],
                 ]} />
-                <p className="text-xs text-slate-400">* Not required for POST /auth/login</p>
+                <p className="text-xs text-slate-400">* Not required for POST /api/auth/login</p>
               </div>
 
               <div>
@@ -181,7 +189,7 @@ export default function ApiDocs() {
               of every subsequent request.
             </p>
 
-            <Endpoint method="POST" path="/auth/login" description="Authenticate a user and return a JWT access token.">
+            <Endpoint method="POST" path="/api/auth/login" description="Authenticate a user and return a JWT access token.">
               <div>
                 <SubHeading>Request Body</SubHeading>
                 <ParamTable rows={[
@@ -192,6 +200,9 @@ export default function ApiDocs() {
   "email": "admin@example.com",
   "password": "password123"
 }`}</Code>
+                <p className="text-xs text-slate-400 mt-1">
+                  Demo credentials: <strong className="text-slate-600">admin@example.com</strong> / <strong className="text-slate-600">password123</strong>
+                </p>
               </div>
               <div>
                 <SubHeading>Response — 200 OK</SubHeading>
@@ -199,10 +210,14 @@ export default function ApiDocs() {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "expiresIn": 86400
 }`}</Code>
+                <p className="text-xs text-slate-400 mt-1">
+                  Store the <InlineCode>token</InlineCode> and send it as <InlineCode>Authorization: Bearer &lt;token&gt;</InlineCode> on every subsequent request.
+                  The token is valid for <InlineCode>expiresIn</InlineCode> seconds (24 hours).
+                </p>
               </div>
             </Endpoint>
 
-            <Endpoint method="POST" path="/auth/logout" description="Invalidate the current access token.">
+            <Endpoint method="POST" path="/api/auth/logout" description="End the current session. The token is discarded client-side.">
               <div>
                 <SubHeading>Response — 204 No Content</SubHeading>
                 <Code>{`(empty body)`}</Code>
@@ -230,7 +245,7 @@ export default function ApiDocs() {
               ]} />
             </div>
 
-            <Endpoint method="GET" path="/cases" description="Return a list of all cases, newest first.">
+            <Endpoint method="GET" path="/api/cases" description="Return a list of all cases, newest first.">
               <div>
                 <SubHeading>Response — 200 OK</SubHeading>
                 <Code>{`{
@@ -257,7 +272,7 @@ export default function ApiDocs() {
               </div>
             </Endpoint>
 
-            <Endpoint method="POST" path="/cases" description="Create a new case. The id and date are assigned by the server.">
+            <Endpoint method="POST" path="/api/cases" description="Create a new case. The id and date are assigned by the server.">
               <div>
                 <SubHeading>Request Body</SubHeading>
                 <ParamTable rows={[
@@ -286,7 +301,7 @@ export default function ApiDocs() {
               </div>
             </Endpoint>
 
-            <Endpoint method="GET" path="/cases/:id" description="Return a single case by its ID.">
+            <Endpoint method="GET" path="/api/cases/:id" description="Return a single case by its ID.">
               <div>
                 <SubHeading>Path Parameters</SubHeading>
                 <ParamTable rows={[
@@ -306,7 +321,7 @@ export default function ApiDocs() {
               </div>
             </Endpoint>
 
-            <Endpoint method="PUT" path="/cases/:id" description="Update an existing case. Only include the fields you want to change.">
+            <Endpoint method="PUT" path="/api/cases/:id" description="Update an existing case. Only include the fields you want to change.">
               <div>
                 <SubHeading>Path Parameters</SubHeading>
                 <ParamTable rows={[
@@ -339,7 +354,7 @@ export default function ApiDocs() {
               </div>
             </Endpoint>
 
-            <Endpoint method="DELETE" path="/cases/:id" description="Permanently delete a case.">
+            <Endpoint method="DELETE" path="/api/cases/:id" description="Permanently delete a case.">
               <div>
                 <SubHeading>Path Parameters</SubHeading>
                 <ParamTable rows={[

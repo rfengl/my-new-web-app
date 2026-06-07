@@ -45,6 +45,7 @@ describe('Case Listing page', () => {
     localStorage.clear()
     mockNavigate.mockClear()
     vi.mocked(api.get).mockResolvedValue({ data: MOCK_CASES, total: MOCK_CASES.length })
+    vi.mocked(api.del).mockReset()
   })
 
   it('renders cases from the API', async () => {
@@ -108,5 +109,32 @@ describe('Case Listing page', () => {
     await user.click(screen.getByRole('button', { name: /log out/i }))
     expect(localStorage.getItem('auth_token')).toBeNull()
     expect(mockNavigate).toHaveBeenCalledWith('/login')
+  })
+
+  it('removes a case from the list after confirming delete', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.mocked(api.del).mockResolvedValue(null)
+    const user = userEvent.setup()
+    renderListing()
+    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
+    await user.click(deleteButtons[0])
+
+    await waitFor(() => expect(screen.queryByText('C-001')).not.toBeInTheDocument())
+    expect(api.del).toHaveBeenCalledWith('/api/cases/C-001')
+  })
+
+  it('does not delete when the confirmation is cancelled', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const user = userEvent.setup()
+    renderListing()
+    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
+    await user.click(deleteButtons[0])
+
+    expect(api.del).not.toHaveBeenCalled()
+    expect(screen.getByText('C-001')).toBeInTheDocument()
   })
 })
