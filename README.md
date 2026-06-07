@@ -89,6 +89,11 @@ npm run preview    # serve the production build locally
 - **New Case** button — navigates to the case form
 - **Edit** button per row — opens the case form pre-populated
 
+### API Documentation
+- In-app API reference at `/api-docs`, accessible via the **API Docs** button in the header
+- Covers authentication, all Cases CRUD endpoints, request/response schemas, and error codes
+- Color-coded method badges (GET, POST, PUT, DELETE)
+
 ### User Guide
 - In-app guide accessible via the **Help** button in the header
 - Sticky sidebar table of contents

@@ -37,6 +37,14 @@ export default function CaseListing() {
             <span className="font-semibold text-slate-800">Case Portal</span>
           </div>
           <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/api-docs')}
+              className="text-sm text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              API Docs
+            </button>
             <button onClick={() => navigate('/guide')}
               className="text-sm text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
