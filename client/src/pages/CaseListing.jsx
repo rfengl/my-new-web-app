@@ -15,7 +15,7 @@ const PRIORITY_STYLES = {
 
 export default function CaseListing() {
   const navigate = useNavigate()
-  const { cases } = useCases()
+  const { cases, loading, error, refresh } = useCases()
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
@@ -80,6 +80,14 @@ export default function CaseListing() {
           </button>
         </div>
 
+        {/* Error banner */}
+        {error && (
+          <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
+            <span>{error}</span>
+            <button onClick={refresh} className="text-xs underline ml-4">Retry</button>
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <table className="w-full text-sm">
@@ -94,7 +102,14 @@ export default function CaseListing() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {cases.length === 0 && (
+              {loading && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                    Loading cases…
+                  </td>
+                </tr>
+              )}
+              {!loading && cases.length === 0 && !error && (
                 <tr>
                   <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
                     No cases yet. Create your first one.

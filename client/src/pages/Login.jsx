@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-// Replace with real API call once the backend is ready
-const MOCK_CREDENTIALS = { email: 'admin@example.com', password: 'password123' }
+import { api } from '../api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -14,19 +12,15 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
-    await new Promise(r => setTimeout(r, 500)) // simulate network
-
-    if (
-      form.email === MOCK_CREDENTIALS.email &&
-      form.password === MOCK_CREDENTIALS.password
-    ) {
-      localStorage.setItem('auth_token', 'mock-jwt-token')
+    try {
+      const { token } = await api.post('/api/auth/login', form)
+      localStorage.setItem('auth_token', token)
       navigate('/cases')
-    } else {
-      setError('Invalid email or password.')
+    } catch (err) {
+      setError(err?.message ?? 'Invalid email or password.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

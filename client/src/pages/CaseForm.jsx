@@ -8,37 +8,54 @@ export default function CaseForm() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
-  const { getCaseById, addCase, updateCase } = useCases()
+  const { getCaseById, addCase, updateCase, loading } = useCases()
 
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm]       = useState(EMPTY_FORM)
   const [notFound, setNotFound] = useState(false)
+  const [saving, setSaving]   = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
-    if (isEdit) {
-      const existing = getCaseById(id)
-      if (existing) {
-        setForm({
-          title: existing.title,
-          description: existing.description ?? '',
-          status: existing.status,
-          priority: existing.priority ?? 'Medium',
-        })
-      } else {
-        setNotFound(true)
-      }
+    if (!isEdit || loading) return
+    const existing = getCaseById(id)
+    if (existing) {
+      setForm({
+        title:       existing.title,
+        description: existing.description ?? '',
+        status:      existing.status,
+        priority:    existing.priority ?? 'Medium',
+      })
+    } else {
+      setNotFound(true)
     }
-  }, [id])
+  }, [id, loading])
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (isEdit) {
-      updateCase(id, form)
-    } else {
-      addCase(form)
+    setSaveError('')
+    setSaving(true)
+    try {
+      if (isEdit) {
+        await updateCase(id, form)
+      } else {
+        await addCase(form)
+      }
+      navigate('/cases')
+    } catch (err) {
+      setSaveError(err?.message ?? 'Failed to save. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    navigate('/cases')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-slate-400 text-sm">Loading…</p>
+      </div>
+    )
   }
 
   if (notFound) {
@@ -141,6 +158,12 @@ export default function CaseForm() {
             </div>
           </div>
 
+          {saveError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2.5">
+              {saveError}
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
@@ -153,10 +176,11 @@ export default function CaseForm() {
             </button>
             <button
               type="submit"
+              disabled={saving}
               className="flex-1 bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium
-                         hover:bg-slate-700 transition-colors"
+                         hover:bg-slate-700 disabled:opacity-60 transition-colors"
             >
-              {isEdit ? 'Save Changes' : 'Create Case'}
+              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Case'}
             </button>
           </div>
         </form>
