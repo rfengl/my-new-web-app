@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCases } from '../context/CasesContext'
+import { api } from '../api'
 
 const EMPTY_FORM = { title: '', description: '', status: 'Open', priority: 'Medium' }
 
@@ -8,27 +9,27 @@ export default function CaseForm() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
-  const { getCaseById, addCase, updateCase, loading } = useCases()
+  const { addCase, updateCase } = useCases()
 
-  const [form, setForm]       = useState(EMPTY_FORM)
-  const [notFound, setNotFound] = useState(false)
-  const [saving, setSaving]   = useState(false)
+  const [form, setForm]           = useState(EMPTY_FORM)
+  const [loadingCase, setLoadingCase] = useState(isEdit)
+  const [notFound, setNotFound]   = useState(false)
+  const [saving, setSaving]       = useState(false)
   const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
-    if (!isEdit || loading) return
-    const existing = getCaseById(id)
-    if (existing) {
-      setForm({
-        title:       existing.title,
-        description: existing.description ?? '',
-        status:      existing.status,
-        priority:    existing.priority ?? 'Medium',
-      })
-    } else {
-      setNotFound(true)
-    }
-  }, [id, loading])
+    if (!isEdit) return
+    setLoadingCase(true)
+    api.get(`/api/cases/${id}`)
+      .then(c => setForm({
+        title:       c.title,
+        description: c.description ?? '',
+        status:      c.status,
+        priority:    c.priority ?? 'Medium',
+      }))
+      .catch(() => setNotFound(true))
+      .finally(() => setLoadingCase(false))
+  }, [id])
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
 
@@ -50,7 +51,7 @@ export default function CaseForm() {
     }
   }
 
-  if (loading) {
+  if (loadingCase) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-400 text-sm">Loading…</p>

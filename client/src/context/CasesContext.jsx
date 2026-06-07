@@ -34,10 +34,8 @@ export function CasesProvider({ children }) {
     setCases(prev => prev.map(c => c.id === id ? updated : c))
   }
 
-  const getCaseById = (id) => cases.find(c => c.id === id)
-
   return (
-    <CasesContext.Provider value={{ cases, loading, error, addCase, updateCase, getCaseById, refresh: fetchCases }}>
+    <CasesContext.Provider value={{ cases, loading, error, addCase, updateCase, refresh: fetchCases }}>
       {children}
     </CasesContext.Provider>
   )

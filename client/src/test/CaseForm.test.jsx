@@ -23,9 +23,11 @@ vi.mock('../api', () => ({
 
 import { api } from '../api'
 
-const MOCK_CASES = [
-  { id: 'C-001', title: 'Server outage in production', description: 'Production servers went down at 3am.', status: 'Open', priority: 'High', date: '2026-06-01' },
-]
+const MOCK_CASE = {
+  id: 'C-001', title: 'Server outage in production',
+  description: 'Production servers went down at 3am.',
+  status: 'Open', priority: 'High', date: '2026-06-01',
+}
 
 function renderForm(path, routePath = path) {
   return render(
@@ -43,7 +45,8 @@ describe('CaseForm — create mode (/cases/new)', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
-    vi.mocked(api.get).mockResolvedValue({ data: MOCK_CASES, total: 1 })
+    // Provider list fetch
+    vi.mocked(api.get).mockResolvedValue({ data: [], total: 0 })
     vi.mocked(api.post).mockResolvedValue({ id: 'C-005', title: 'New test issue', status: 'Open', priority: 'Medium', date: '2026-06-07' })
   })
 
@@ -77,6 +80,7 @@ describe('CaseForm — create mode (/cases/new)', () => {
     await user.click(screen.getByRole('button', { name: /create case/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/cases'))
+    expect(api.post).toHaveBeenCalledWith('/api/cases', expect.objectContaining({ title: 'New test issue' }))
   })
 
   it('navigates back to /cases when Cancel is clicked', async () => {
@@ -93,14 +97,20 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
-    vi.mocked(api.get).mockResolvedValue({ data: MOCK_CASES, total: 1 })
-    vi.mocked(api.put).mockResolvedValue({ ...MOCK_CASES[0], title: 'Updated title' })
+    // Provider list fetch + individual case fetch
+    vi.mocked(api.get).mockImplementation((path) => {
+      if (path === '/api/cases/C-001') return Promise.resolve(MOCK_CASE)
+      if (path === '/api/cases/C-999') return Promise.reject({ message: 'Not found' })
+      return Promise.resolve({ data: [], total: 0 })
+    })
+    vi.mocked(api.put).mockResolvedValue({ ...MOCK_CASE, title: 'Updated title' })
   })
 
-  it('pre-populates fields with the existing case data', async () => {
+  it('fetches the case by ID and pre-populates the form', async () => {
     renderForm('/cases/C-001/edit', '/cases/:id/edit')
     await waitFor(() => expect(screen.getByDisplayValue('Server outage in production')).toBeInTheDocument())
     expect(screen.getByDisplayValue('Production servers went down at 3am.')).toBeInTheDocument()
+    expect(api.get).toHaveBeenCalledWith('/api/cases/C-001')
   })
 
   it('shows "Edit Case C-001" in the page heading', async () => {
@@ -114,7 +124,7 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
     expect(screen.queryByRole('button', { name: /create case/i })).not.toBeInTheDocument()
   })
 
-  it('saves changes and navigates to /cases on submit', async () => {
+  it('calls PUT /api/cases/:id and navigates to /cases on submit', async () => {
     const user = userEvent.setup()
     renderForm('/cases/C-001/edit', '/cases/:id/edit')
     await waitFor(() => expect(screen.getByDisplayValue('Server outage in production')).toBeInTheDocument())
@@ -125,10 +135,12 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
     await user.click(screen.getByRole('button', { name: /save changes/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/cases'))
+    expect(api.put).toHaveBeenCalledWith('/api/cases/C-001', expect.objectContaining({ title: 'Updated title' }))
   })
 
-  it('shows a not-found message for an unknown case id', async () => {
+  it('shows a not-found message when the API returns an error for the case ID', async () => {
     renderForm('/cases/C-999/edit', '/cases/:id/edit')
     await waitFor(() => expect(screen.getByText(/not found/i)).toBeInTheDocument())
+    expect(api.get).toHaveBeenCalledWith('/api/cases/C-999')
   })
 })
