@@ -1,4 +1,4 @@
-export type Case = {
+export type Membership = {
   id: string
   date?: string
   name: string

@@ -56,7 +56,7 @@ describe('CaseForm — create mode (/cases/new)', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
-    vi.mocked(api.get).mockResolvedValue({ data: [], total: 0 })
+    vi.mocked(api.get).mockResolvedValue([])
     vi.mocked(api.post).mockResolvedValue({ ...MOCK_CASE, id: 'C-005', date: '2026-06-07' })
   })
 
@@ -90,7 +90,7 @@ describe('CaseForm — create mode (/cases/new)', () => {
     await user.click(screen.getByRole('button', { name: /create case/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/cases'))
-    expect(api.post).toHaveBeenCalledWith('/api/cases', expect.objectContaining({ name: 'Ahmad bin Abdullah' }))
+    expect(api.post).toHaveBeenCalledWith('/api/memberships', expect.objectContaining({ name: 'Ahmad bin Abdullah' }))
   })
 
   it('navigates back to /cases when Cancel is clicked', async () => {
@@ -108,9 +108,11 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
     localStorage.clear()
     mockNavigate.mockClear()
     vi.mocked(api.get).mockImplementation((path) => {
-      if (path === '/api/cases/C-001') return Promise.resolve(MOCK_CASE)
-      if (path === '/api/cases/C-999') return Promise.reject({ message: 'Not found' })
-      return Promise.resolve({ data: [], total: 0 })
+      if (path === '/api/memberships/C-001') return Promise.resolve(MOCK_CASE)
+      if (path === '/api/memberships/C-001/submissions') return Promise.resolve([])
+      if (path === '/api/memberships/C-999') return Promise.reject({ message: 'Not found' })
+      if (path === '/api/memberships/C-999/submissions') return Promise.resolve([])
+      return Promise.resolve([])
     })
     vi.mocked(api.put).mockResolvedValue({ ...MOCK_CASE, name: 'Updated Name' })
   })
@@ -119,7 +121,7 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
     renderForm('/cases/C-001/edit', '/cases/:id/edit')
     await waitFor(() => expect(screen.getByDisplayValue('Ahmad bin Abdullah')).toBeInTheDocument())
     expect(screen.getByDisplayValue('TM-2024-00123')).toBeInTheDocument()
-    expect(api.get).toHaveBeenCalledWith('/api/cases/C-001')
+    expect(api.get).toHaveBeenCalledWith('/api/memberships/C-001')
   })
 
   it('shows "Edit Case C-001" in the page heading', async () => {
@@ -133,7 +135,7 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
     expect(screen.queryByRole('button', { name: /create case/i })).not.toBeInTheDocument()
   })
 
-  it('calls PUT /api/cases/:id and navigates to /cases on submit', async () => {
+  it('calls PUT /api/memberships/:id and navigates to /cases on submit', async () => {
     const user = userEvent.setup()
     renderForm('/cases/C-001/edit', '/cases/:id/edit')
     await waitFor(() => expect(screen.getByDisplayValue('Ahmad bin Abdullah')).toBeInTheDocument())
@@ -144,12 +146,12 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
     await user.click(screen.getByRole('button', { name: /save changes/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/cases'))
-    expect(api.put).toHaveBeenCalledWith('/api/cases/C-001', expect.objectContaining({ name: 'Updated Name' }))
+    expect(api.put).toHaveBeenCalledWith('/api/memberships/C-001', expect.objectContaining({ name: 'Updated Name' }))
   })
 
   it('shows a not-found message when the API returns an error for the case ID', async () => {
     renderForm('/cases/C-999/edit', '/cases/:id/edit')
     await waitFor(() => expect(screen.getByText(/not found/i)).toBeInTheDocument())
-    expect(api.get).toHaveBeenCalledWith('/api/cases/C-999')
+    expect(api.get).toHaveBeenCalledWith('/api/memberships/C-999')
   })
 })

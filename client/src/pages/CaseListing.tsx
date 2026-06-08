@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCasesStore } from '../store/casesStore'
+import { useMembershipsStore } from '../store/membershipsStore'
 import { formatDate } from '../utils/date'
 
 const STATUS_STYLES: Record<string, string> = {
@@ -11,24 +11,24 @@ const STATUS_STYLES: Record<string, string> = {
 export default function CaseListing() {
   const navigate = useNavigate()
 
-  const cases      = useCasesStore((s) => s.cases)
-  const loading    = useCasesStore((s) => s.loading)
-  const error      = useCasesStore((s) => s.error)
-  const fetchCases = useCasesStore((s) => s.fetchCases)
-  const deleteCase = useCasesStore((s) => s.deleteCase)
-  const reset      = useCasesStore((s) => s.reset)
+  const memberships      = useMembershipsStore((s) => s.memberships)
+  const loading          = useMembershipsStore((s) => s.loading)
+  const error            = useMembershipsStore((s) => s.error)
+  const fetchMemberships = useMembershipsStore((s) => s.fetchMemberships)
+  const deleteMembership = useMembershipsStore((s) => s.deleteMembership)
+  const reset            = useMembershipsStore((s) => s.reset)
 
   const [deleting, setDeleting] = useState(new Set<string>())
 
   useEffect(() => {
-    fetchCases()
-  }, [fetchCases])
+    fetchMemberships()
+  }, [fetchMemberships])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(`Delete case ${id}? This cannot be undone.`)) return
     setDeleting((prev) => new Set([...prev, id]))
     try {
-      await deleteCase(id)
+      await deleteMembership(id)
     } finally {
       setDeleting((prev) => {
         const s = new Set(prev)
@@ -88,7 +88,7 @@ export default function CaseListing() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-slate-800">Cases</h1>
-            <p className="text-sm text-slate-500 mt-0.5">{cases.length} total</p>
+            <p className="text-sm text-slate-500 mt-0.5">{memberships.length} total</p>
           </div>
           <button
             onClick={() => navigate('/cases/new')}
@@ -106,7 +106,7 @@ export default function CaseListing() {
         {error && (
           <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
             <span>{error}</span>
-            <button onClick={fetchCases} className="text-xs underline ml-4">Retry</button>
+            <button onClick={fetchMemberships} className="text-xs underline ml-4">Retry</button>
           </div>
         )}
 
@@ -132,29 +132,29 @@ export default function CaseListing() {
                   </td>
                 </tr>
               )}
-              {!loading && cases.length === 0 && !error && (
+              {!loading && memberships.length === 0 && !error && (
                 <tr>
                   <td colSpan={7} className="px-5 py-10 text-center text-slate-400">
                     No cases yet. Create your first one.
                   </td>
                 </tr>
               )}
-              {cases.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-5 py-3.5 font-mono text-slate-600 text-xs">{c.policyNo || '—'}</td>
-                  <td className="px-5 py-3.5 text-slate-800 font-medium">{c.name}</td>
-                  <td className="px-5 py-3.5 font-mono text-slate-500 text-xs">{c.nric || '—'}</td>
-                  <td className="px-5 py-3.5 text-slate-500 text-xs">{formatDate(c.policyEffDate)}</td>
+              {memberships.map((m) => (
+                <tr key={m.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-5 py-3.5 font-mono text-slate-600 text-xs">{m.policyNo || '—'}</td>
+                  <td className="px-5 py-3.5 text-slate-800 font-medium">{m.name}</td>
+                  <td className="px-5 py-3.5 font-mono text-slate-500 text-xs">{m.nric || '—'}</td>
+                  <td className="px-5 py-3.5 text-slate-500 text-xs">{formatDate(m.policyEffDate)}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[c.status] ?? 'bg-slate-100 text-slate-500'}`}>
-                      {c.status}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[m.status] ?? 'bg-slate-100 text-slate-500'}`}>
+                      {m.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-400 text-xs">{formatDate(c.date)}</td>
+                  <td className="px-5 py-3.5 text-slate-400 text-xs">{formatDate(m.date)}</td>
                   <td className="px-5 py-3.5 text-right">
                     <div className="inline-flex items-center gap-2">
                       <button
-                        onClick={() => navigate(`/cases/${c.id}/edit`)}
+                        onClick={() => navigate(`/cases/${m.id}/edit`)}
                         className="inline-flex items-center gap-1 text-xs font-medium text-slate-600
                                    border border-slate-300 rounded-md px-2.5 py-1
                                    hover:bg-slate-100 transition-colors"
@@ -166,8 +166,8 @@ export default function CaseListing() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(c.id)}
-                        disabled={deleting.has(c.id)}
+                        onClick={() => handleDelete(m.id)}
+                        disabled={deleting.has(m.id)}
                         className="inline-flex items-center gap-1 text-xs font-medium text-red-600
                                    border border-red-200 rounded-md px-2.5 py-1
                                    hover:bg-red-50 disabled:opacity-50 transition-colors"
@@ -176,7 +176,7 @@ export default function CaseListing() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        {deleting.has(c.id) ? 'Deleting…' : 'Delete'}
+                        {deleting.has(m.id) ? 'Deleting…' : 'Delete'}
                       </button>
                     </div>
                   </td>

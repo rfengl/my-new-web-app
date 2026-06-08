@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useCasesStore } from '../store/casesStore'
+import { useMembershipsStore } from '../store/membershipsStore'
 import CaseListing from '../pages/CaseListing'
 
 const mockNavigate = vi.fn()
@@ -42,7 +42,7 @@ describe('Case Listing page', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
-    useCasesStore.setState({ cases: [], loading: false, error: null })
+    useMembershipsStore.setState({ memberships: [], loading: false, error: null })
     vi.mocked(api.get).mockResolvedValue({ data: MOCK_CASES, total: MOCK_CASES.length })
     vi.mocked(api.del).mockReset()
   })
@@ -120,7 +120,7 @@ describe('Case Listing page', () => {
     await user.click(deleteButtons[0])
 
     await waitFor(() => expect(screen.queryByText('Ahmad bin Abdullah')).not.toBeInTheDocument())
-    expect(api.del).toHaveBeenCalledWith('/api/cases/C-001')
+    expect(api.del).toHaveBeenCalledWith('/api/memberships/C-001')
   })
 
   it('does not delete when the confirmation is cancelled', async () => {

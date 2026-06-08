@@ -10,7 +10,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Services (singleton = in-memory store lives for app lifetime)
-builder.Services.AddSingleton<ICaseService, CaseService>();
+builder.Services.AddSingleton<IMembershipService, MembershipService>();
+builder.Services.AddSingleton<ISubmissionService, SubmissionService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 
 // JWT authentication

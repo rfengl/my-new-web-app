@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useStore } from 'zustand'
-import { useCasesStore } from '../store/casesStore'
-import { createCaseFormStore } from '../store/caseFormStore'
-import type { CaseFormFields } from '../store/caseFormStore'
+import { useMembershipsStore } from '../store/membershipsStore'
+import { createMembershipFormStore } from '../store/membershipFormStore'
+import type { MembershipFormFields } from '../store/membershipFormStore'
+import { createSubmissionFormStore } from '../store/submissionFormStore'
 import { api } from '../api'
-import type { Case } from '../types/case'
+import type { Membership } from '../types/membership'
+import type { SubmissionGL } from '../types/submissionGL'
 import ZustandInput from '../components/ZustandInput'
 import ZustandSelect from '../components/ZustandSelect'
 import ZustandTextarea from '../components/ZustandTextarea'
@@ -27,40 +29,65 @@ export default function CaseForm() {
   const isEdit = Boolean(id)
   const navigate = useNavigate()
 
-  const addCase    = useCasesStore((s) => s.addCase)
-  const updateCase = useCasesStore((s) => s.updateCase)
+  const addMembership    = useMembershipsStore((s) => s.addMembership)
+  const updateMembership = useMembershipsStore((s) => s.updateMembership)
 
-  const [store]     = useState(() => createCaseFormStore())
+  const [store]     = useState(() => createMembershipFormStore())
+  const [subStore]  = useState(() => createSubmissionFormStore())
   const [activeTab, setActiveTab] = useState<Tab>('verification')
+  const [submissions, setSubmissions] = useState<SubmissionGL[]>([])
 
-  const saving      = useStore(store, (s) => s.saving)
-  const saveError   = useStore(store, (s) => s.saveError)
-  const loadingCase = useStore(store, (s) => s.loadingCase)
-  const notFound    = useStore(store, (s) => s.notFound)
+  const saving          = useStore(store, (s) => s.saving)
+  const saveError       = useStore(store, (s) => s.saveError)
+  const subSaving       = useStore(subStore, (s) => s.saving)
+  const subSaveError    = useStore(subStore, (s) => s.saveError)
+  const subSubmissionId = useStore(subStore, (s) => s.submissionId)
+  const loadingCase     = useStore(store, (s) => s.loadingCase)
+  const notFound        = useStore(store, (s) => s.notFound)
+
+  const loadSubmissions = () =>
+    api.get<SubmissionGL[]>(`/api/memberships/${id}/submissions`)
+       .then(setSubmissions)
+       .catch(() => {})
 
   useEffect(() => {
     if (!isEdit) {
       store.getState().reset()
+      subStore.getState().reset()
       return
     }
     store.setState({ loadingCase: true, notFound: false })
     api
-      .get<Case>(`/api/cases/${id}`)
-      .then((c) => store.getState().populate(c))
+      .get<Membership>(`/api/memberships/${id}`)
+      .then((m) => store.getState().populate(m))
       .catch(() => store.setState({ notFound: true }))
       .finally(() => store.setState({ loadingCase: false }))
+    loadSubmissions()
   }, [id])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (activeTab === 'submission') {
+      subStore.setState({ saveError: '', saving: true })
+      try {
+        await subStore.getState().save(id!)
+        await loadSubmissions()
+        subStore.getState().reset()
+      } catch (err: any) {
+        subStore.setState({ saveError: err?.message ?? 'Failed to save. Please try again.' })
+      } finally {
+        subStore.setState({ saving: false })
+      }
+      return
+    }
     store.setState({ saveError: '', saving: true })
     const { saving: _s, saveError: _se, loadingCase: _lc, notFound: _nf,
             setField: _sf, populate: _p, reset: _r, ...formData } = store.getState()
     try {
       if (isEdit) {
-        await updateCase(id!, formData as CaseFormFields)
+        await updateMembership(id!, formData as MembershipFormFields)
       } else {
-        await addCase(formData as CaseFormFields)
+        await addMembership(formData as MembershipFormFields)
       }
       navigate('/cases')
     } catch (err: any) {
@@ -333,26 +360,112 @@ export default function CaseForm() {
           {/* ── Submission / GL Request tab ── */}
           {activeTab === 'submission' && (
             <>
-              <div className="bg-white rounded-xl border border-slate-200 p-12 flex flex-col items-center justify-center gap-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              {/* Existing submissions list */}
+              {submissions.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-700">GL Requests</p>
+                    <button type="button" onClick={() => subStore.getState().reset()}
+                      className="text-xs text-slate-500 hover:text-slate-800 underline underline-offset-2">
+                      + New
+                    </button>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">ID</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Request Type</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">MRN</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">GL Type</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Created</th>
+                        <th className="px-4 py-2.5" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {submissions.map((s) => (
+                        <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-2.5 font-mono text-slate-500 text-xs">{s.id}</td>
+                          <td className="px-4 py-2.5 text-slate-700">{s.requestType || '—'}</td>
+                          <td className="px-4 py-2.5 text-slate-500 text-xs">{s.submissionStatus || '—'}</td>
+                          <td className="px-4 py-2.5 font-mono text-slate-500 text-xs">{s.mrn || '—'}</td>
+                          <td className="px-4 py-2.5 text-slate-500 text-xs">{s.glType || '—'}</td>
+                          <td className="px-4 py-2.5 text-slate-400 text-xs">{s.createdDate || '—'}</td>
+                          <td className="px-4 py-2.5 text-right">
+                            <button type="button" onClick={() => subStore.getState().populate(s)}
+                              className="text-xs font-medium text-slate-600 border border-slate-300
+                                         rounded-md px-2.5 py-1 hover:bg-slate-100 transition-colors">
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div>
-                  <p className="text-slate-700 font-medium">Submission / GL Request</p>
-                  <p className="text-slate-400 text-sm mt-1">
-                    This section is under construction.
-                  </p>
+              )}
+
+              {/* Create / edit form */}
+              <fieldset className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+                <legend className="text-sm font-semibold text-slate-700 px-1 -mt-3 mb-2">
+                  {subSubmissionId ? 'Edit GL Request' : 'New GL Request'}
+                </legend>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
+                    <ZustandSelect store={subStore} field="submissionStatus" className={selectClass}>
+                      <option value="">— Select —</option>
+                      <option>Pending</option>
+                      <option>Submitted</option>
+                      <option>Approved</option>
+                      <option>Rejected</option>
+                      <option>Cancelled</option>
+                    </ZustandSelect>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Request Type</label>
+                    <ZustandSelect store={subStore} field="requestType" className={selectClass}>
+                      <option value="">— Select —</option>
+                      <option>New Admission</option>
+                      <option>Extension</option>
+                      <option>Top-Up</option>
+                      <option>Discharge</option>
+                      <option>Others</option>
+                    </ZustandSelect>
+                  </div>
                 </div>
-              </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">GL Type</label>
+                    <ZustandInput store={subStore} field="glType" type="number" min={0} step={1}
+                      placeholder="0" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">MRN</label>
+                    <ZustandInput store={subStore} field="mrn" type="text"
+                      placeholder="Medical record number" className={inputClass} />
+                  </div>
+                </div>
+              </fieldset>
+
+              {subSaveError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2.5">
+                  {subSaveError}
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <button type="button" onClick={() => navigate('/cases')}
                   className="flex-1 border border-slate-300 text-slate-600 rounded-lg py-2.5 text-sm
                              hover:bg-slate-50 transition-colors">
                   Cancel
+                </button>
+                <button type="submit" disabled={subSaving}
+                  className="flex-1 bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium
+                             hover:bg-slate-700 disabled:opacity-60 transition-colors">
+                  {subSaving ? 'Saving…' : subSubmissionId ? 'Update GL Request' : 'Add GL Request'}
                 </button>
               </div>
             </>
