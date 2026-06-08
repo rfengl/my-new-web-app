@@ -9,7 +9,9 @@ const METHOD_STYLES = {
   DELETE: 'bg-red-100 text-red-700',
 }
 
-function MethodBadge({ method }) {
+type MethodKey = keyof typeof METHOD_STYLES
+
+function MethodBadge({ method }: { method: MethodKey }) {
   return (
     <span className={`text-xs font-bold px-2 py-0.5 rounded font-mono ${METHOD_STYLES[method]}`}>
       {method}
@@ -17,7 +19,7 @@ function MethodBadge({ method }) {
   )
 }
 
-function Code({ children }) {
+function Code({ children }: { children: React.ReactNode }) {
   return (
     <pre className="bg-slate-900 text-slate-100 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
       <code>{children}</code>
@@ -25,7 +27,7 @@ function Code({ children }) {
   )
 }
 
-function InlineCode({ children }) {
+function InlineCode({ children }: { children: React.ReactNode }) {
   return (
     <code className="bg-slate-100 text-slate-700 text-xs px-1.5 py-0.5 rounded font-mono">
       {children}
@@ -33,7 +35,7 @@ function InlineCode({ children }) {
   )
 }
 
-function SectionHeading({ id, children }) {
+function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h2 id={id} className="scroll-mt-24 text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">
       {children}
@@ -41,11 +43,11 @@ function SectionHeading({ id, children }) {
   )
 }
 
-function SubHeading({ children }) {
+function SubHeading({ children }: { children: React.ReactNode }) {
   return <h3 className="text-sm font-semibold text-slate-700 mb-2">{children}</h3>
 }
 
-function ParamTable({ rows }) {
+function ParamTable({ rows }: { rows: string[][] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 text-sm mb-4">
       <table className="w-full">
@@ -73,7 +75,12 @@ function ParamTable({ rows }) {
   )
 }
 
-function Endpoint({ method, path, description, children }) {
+function Endpoint({ method, path, description, children }: {
+  method: MethodKey
+  path: string
+  description: string
+  children: React.ReactNode
+}) {
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
       <div className="bg-slate-50 px-4 py-3 flex items-center gap-3 border-b border-slate-200">

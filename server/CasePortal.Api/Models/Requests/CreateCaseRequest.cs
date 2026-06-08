@@ -5,13 +5,23 @@ namespace CasePortal.Api.Models.Requests;
 public class CreateCaseRequest
 {
     [Required, MaxLength(200)]
-    public string Title { get; set; } = string.Empty;
+    public string  Name                  { get; set; } = string.Empty;
 
-    public string? Description { get; set; }
+    public string  Nric                  { get; set; } = string.Empty;
+    public string  PassportNo            { get; set; } = string.Empty;
+    public string  Insurance             { get; set; } = string.Empty;
+    public string  Company               { get; set; } = string.Empty;
+    public string  PolicyNo              { get; set; } = string.Empty;
+    public decimal RbEntitlement         { get; set; }
+    public decimal CoPayment             { get; set; }
+    public string  CoInsurance           { get; set; } = string.Empty;
+    public decimal Deductible            { get; set; }
+    public string  PolicyEffDate         { get; set; } = string.Empty;
+    public string  PolicyExpDate         { get; set; } = string.Empty;
+    public string  PolicyLapseDate       { get; set; } = string.Empty;
 
     [Required]
-    public string Status { get; set; } = "Open";
+    public string  Status                { get; set; } = "Inforce";
 
-    [Required]
-    public string Priority { get; set; } = "Medium";
+    public string  UnderwritingExclusion { get; set; } = string.Empty;
 }

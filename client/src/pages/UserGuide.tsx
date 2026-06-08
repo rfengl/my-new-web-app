@@ -9,7 +9,7 @@ const sections = [
   { id: 'logout',    title: '6. Logging Out' },
 ]
 
-function Section({ id, title, children }) {
+function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24">
       <h2 className="text-lg font-bold text-slate-800 mb-3 pb-2 border-b border-slate-200">
@@ -22,7 +22,7 @@ function Section({ id, title, children }) {
   )
 }
 
-function Step({ number, children }) {
+function Step({ number, children }: { number: number; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
       <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-800 text-white text-xs
@@ -34,7 +34,7 @@ function Step({ number, children }) {
   )
 }
 
-function Note({ children }) {
+function Note({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
       <svg className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,7 +46,7 @@ function Note({ children }) {
   )
 }
 
-function Badge({ color, label }) {
+function Badge({ color, label }: { color: 'green' | 'blue' | 'gray'; label: string }) {
   const styles = {
     green: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
     blue:  'bg-blue-50 text-blue-700 ring-1 ring-blue-200',

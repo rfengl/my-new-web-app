@@ -1,36 +1,46 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCases } from '../context/CasesContext'
+import { useCasesStore } from '../store/casesStore'
+import { formatDate } from '../utils/date'
 
-const STATUS_STYLES = {
-  Open:          'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  'In Progress': 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-  Closed:        'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
-}
-
-const PRIORITY_STYLES = {
-  High:   'text-red-500',
-  Medium: 'text-amber-500',
-  Low:    'text-slate-400',
+const STATUS_STYLES: Record<string, string> = {
+  Inforce: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+  Expired: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
 }
 
 export default function CaseListing() {
   const navigate = useNavigate()
-  const { cases, loading, error, deleteCase, refresh } = useCases()
-  const [deleting, setDeleting] = useState(new Set())
 
-  const handleDelete = async (id) => {
+  const cases      = useCasesStore((s) => s.cases)
+  const loading    = useCasesStore((s) => s.loading)
+  const error      = useCasesStore((s) => s.error)
+  const fetchCases = useCasesStore((s) => s.fetchCases)
+  const deleteCase = useCasesStore((s) => s.deleteCase)
+  const reset      = useCasesStore((s) => s.reset)
+
+  const [deleting, setDeleting] = useState(new Set<string>())
+
+  useEffect(() => {
+    fetchCases()
+  }, [fetchCases])
+
+  const handleDelete = async (id: string) => {
     if (!window.confirm(`Delete case ${id}? This cannot be undone.`)) return
-    setDeleting(prev => new Set([...prev, id]))
+    setDeleting((prev) => new Set([...prev, id]))
     try {
       await deleteCase(id)
     } finally {
-      setDeleting(prev => { const s = new Set(prev); s.delete(id); return s })
+      setDeleting((prev) => {
+        const s = new Set(prev)
+        s.delete(id)
+        return s
+      })
     }
   }
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
+    reset()
     navigate('/login')
   }
 
@@ -38,7 +48,7 @@ export default function CaseListing() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,7 +84,7 @@ export default function CaseListing() {
       </header>
 
       {/* Content */}
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-slate-800">Cases</h1>
@@ -96,7 +106,7 @@ export default function CaseListing() {
         {error && (
           <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
             <span>{error}</span>
-            <button onClick={refresh} className="text-xs underline ml-4">Retry</button>
+            <button onClick={fetchCases} className="text-xs underline ml-4">Retry</button>
           </div>
         )}
 
@@ -105,44 +115,42 @@ export default function CaseListing() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Case #</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Title</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Policy No</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">NRIC</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Eff. Date</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Created</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-10 text-center text-slate-400">
                     Loading cases…
                   </td>
                 </tr>
               )}
               {!loading && cases.length === 0 && !error && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-10 text-center text-slate-400">
                     No cases yet. Create your first one.
                   </td>
                 </tr>
               )}
-              {cases.map(c => (
+              {cases.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-5 py-3.5 font-mono text-slate-400 text-xs">{c.id}</td>
-                  <td className="px-5 py-3.5 text-slate-800 font-medium">{c.title}</td>
+                  <td className="px-5 py-3.5 font-mono text-slate-600 text-xs">{c.policyNo || '—'}</td>
+                  <td className="px-5 py-3.5 text-slate-800 font-medium">{c.name}</td>
+                  <td className="px-5 py-3.5 font-mono text-slate-500 text-xs">{c.nric || '—'}</td>
+                  <td className="px-5 py-3.5 text-slate-500 text-xs">{formatDate(c.policyEffDate)}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`text-xs font-semibold ${PRIORITY_STYLES[c.priority] ?? 'text-slate-400'}`}>
-                      {c.priority ?? '—'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[c.status]}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[c.status] ?? 'bg-slate-100 text-slate-500'}`}>
                       {c.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-400">{c.date}</td>
+                  <td className="px-5 py-3.5 text-slate-400 text-xs">{formatDate(c.date)}</td>
                   <td className="px-5 py-3.5 text-right">
                     <div className="inline-flex items-center gap-2">
                       <button

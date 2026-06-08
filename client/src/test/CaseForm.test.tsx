@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CasesProvider } from '../context/CasesContext'
 import CaseForm from '../pages/CaseForm'
 
 const mockNavigate = vi.fn()
@@ -24,19 +23,31 @@ vi.mock('../api', () => ({
 import { api } from '../api'
 
 const MOCK_CASE = {
-  id: 'C-001', title: 'Server outage in production',
-  description: 'Production servers went down at 3am.',
-  status: 'Open', priority: 'High', date: '2026-06-01',
+  id: 'C-001',
+  name: 'Ahmad bin Abdullah',
+  nric: '801231-10-1234',
+  passportNo: '',
+  insurance: 'Takaful Malaysia',
+  company: 'ABC Sdn Bhd',
+  policyNo: 'TM-2024-00123',
+  rbEntitlement: 200,
+  coPayment: 10,
+  coInsurance: 'N/A',
+  deductible: 500,
+  policyEffDate: '2024-01-01',
+  policyExpDate: '2025-01-01',
+  policyLapseDate: '',
+  status: 'Inforce',
+  underwritingExclusion: '',
+  date: '2026-06-01',
 }
 
-function renderForm(path, routePath = path) {
+function renderForm(path: string, routePath = path) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <CasesProvider>
-        <Routes>
-          <Route path={routePath} element={<CaseForm />} />
-        </Routes>
-      </CasesProvider>
+      <Routes>
+        <Route path={routePath} element={<CaseForm />} />
+      </Routes>
     </MemoryRouter>
   )
 }
@@ -45,15 +56,14 @@ describe('CaseForm — create mode (/cases/new)', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
-    // Provider list fetch
     vi.mocked(api.get).mockResolvedValue({ data: [], total: 0 })
-    vi.mocked(api.post).mockResolvedValue({ id: 'C-005', title: 'New test issue', status: 'Open', priority: 'Medium', date: '2026-06-07' })
+    vi.mocked(api.post).mockResolvedValue({ ...MOCK_CASE, id: 'C-005', date: '2026-06-07' })
   })
 
   it('renders a blank form with Create Case button', async () => {
     renderForm('/cases/new')
-    await waitFor(() => expect(screen.getByPlaceholderText(/brief summary/i)).toBeInTheDocument())
-    expect(screen.getByPlaceholderText(/brief summary/i)).toHaveValue('')
+    await waitFor(() => expect(screen.getByPlaceholderText(/full name/i)).toBeInTheDocument())
+    expect(screen.getByPlaceholderText(/full name/i)).toHaveValue('')
     expect(screen.getByRole('button', { name: /create case/i })).toBeInTheDocument()
   })
 
@@ -62,7 +72,7 @@ describe('CaseForm — create mode (/cases/new)', () => {
     await waitFor(() => expect(screen.getByText('New Case')).toBeInTheDocument())
   })
 
-  it('requires the title field before submitting', async () => {
+  it('requires the name field before submitting', async () => {
     const user = userEvent.setup()
     renderForm('/cases/new')
     await waitFor(() => expect(screen.getByRole('button', { name: /create case/i })).toBeInTheDocument())
@@ -74,13 +84,13 @@ describe('CaseForm — create mode (/cases/new)', () => {
   it('creates a case and navigates to /cases on submit', async () => {
     const user = userEvent.setup()
     renderForm('/cases/new')
-    await waitFor(() => expect(screen.getByPlaceholderText(/brief summary/i)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByPlaceholderText(/full name/i)).toBeInTheDocument())
 
-    await user.type(screen.getByPlaceholderText(/brief summary/i), 'New test issue')
+    await user.type(screen.getByPlaceholderText(/full name/i), 'Ahmad bin Abdullah')
     await user.click(screen.getByRole('button', { name: /create case/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/cases'))
-    expect(api.post).toHaveBeenCalledWith('/api/cases', expect.objectContaining({ title: 'New test issue' }))
+    expect(api.post).toHaveBeenCalledWith('/api/cases', expect.objectContaining({ name: 'Ahmad bin Abdullah' }))
   })
 
   it('navigates back to /cases when Cancel is clicked', async () => {
@@ -97,19 +107,18 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
-    // Provider list fetch + individual case fetch
     vi.mocked(api.get).mockImplementation((path) => {
       if (path === '/api/cases/C-001') return Promise.resolve(MOCK_CASE)
       if (path === '/api/cases/C-999') return Promise.reject({ message: 'Not found' })
       return Promise.resolve({ data: [], total: 0 })
     })
-    vi.mocked(api.put).mockResolvedValue({ ...MOCK_CASE, title: 'Updated title' })
+    vi.mocked(api.put).mockResolvedValue({ ...MOCK_CASE, name: 'Updated Name' })
   })
 
   it('fetches the case by ID and pre-populates the form', async () => {
     renderForm('/cases/C-001/edit', '/cases/:id/edit')
-    await waitFor(() => expect(screen.getByDisplayValue('Server outage in production')).toBeInTheDocument())
-    expect(screen.getByDisplayValue('Production servers went down at 3am.')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByDisplayValue('Ahmad bin Abdullah')).toBeInTheDocument())
+    expect(screen.getByDisplayValue('TM-2024-00123')).toBeInTheDocument()
     expect(api.get).toHaveBeenCalledWith('/api/cases/C-001')
   })
 
@@ -127,15 +136,15 @@ describe('CaseForm — edit mode (/cases/:id/edit)', () => {
   it('calls PUT /api/cases/:id and navigates to /cases on submit', async () => {
     const user = userEvent.setup()
     renderForm('/cases/C-001/edit', '/cases/:id/edit')
-    await waitFor(() => expect(screen.getByDisplayValue('Server outage in production')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByDisplayValue('Ahmad bin Abdullah')).toBeInTheDocument())
 
-    const titleInput = screen.getByDisplayValue('Server outage in production')
-    await user.clear(titleInput)
-    await user.type(titleInput, 'Updated title')
+    const nameInput = screen.getByDisplayValue('Ahmad bin Abdullah')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'Updated Name')
     await user.click(screen.getByRole('button', { name: /save changes/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/cases'))
-    expect(api.put).toHaveBeenCalledWith('/api/cases/C-001', expect.objectContaining({ title: 'Updated title' }))
+    expect(api.put).toHaveBeenCalledWith('/api/cases/C-001', expect.objectContaining({ name: 'Updated Name' }))
   })
 
   it('shows a not-found message when the API returns an error for the case ID', async () => {

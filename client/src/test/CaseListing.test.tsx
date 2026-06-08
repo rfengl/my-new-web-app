@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CasesProvider } from '../context/CasesContext'
+import { useCasesStore } from '../store/casesStore'
 import CaseListing from '../pages/CaseListing'
 
 const mockNavigate = vi.fn()
@@ -24,18 +24,16 @@ vi.mock('../api', () => ({
 import { api } from '../api'
 
 const MOCK_CASES = [
-  { id: 'C-001', title: 'Server outage in production',    status: 'Open',        priority: 'High',   date: '2026-06-01' },
-  { id: 'C-002', title: 'Login timeout after 5 minutes',  status: 'In Progress', priority: 'Medium', date: '2026-06-03' },
-  { id: 'C-003', title: 'Export PDF feature not working', status: 'Closed',      priority: 'Low',    date: '2026-05-28' },
-  { id: 'C-004', title: 'Dashboard chart renders empty',  status: 'Open',        priority: 'Medium', date: '2026-06-05' },
+  { id: 'C-001', name: 'Ahmad bin Abdullah',    nric: '801231-10-1234', policyNo: 'TM-2024-00123',  policyEffDate: '2024-01-01', status: 'Inforce', date: '2026-06-01' },
+  { id: 'C-002', name: 'Siti Rahayu bt Yusof', nric: '900515-14-5678', policyNo: 'PRU-2023-00456', policyEffDate: '2023-06-01', status: 'Expired', date: '2026-06-03' },
+  { id: 'C-003', name: 'Lim Wei Jie',          nric: '',               policyNo: 'AIA-2024-00789', policyEffDate: '2024-03-15', status: 'Inforce', date: '2026-05-28' },
+  { id: 'C-004', name: 'Kavitha a/p Rajan',    nric: '851120-07-2345', policyNo: 'GE-2022-01011',  policyEffDate: '2022-11-20', status: 'Expired', date: '2026-06-05' },
 ]
 
 function renderListing() {
   return render(
     <MemoryRouter>
-      <CasesProvider>
-        <CaseListing />
-      </CasesProvider>
+      <CaseListing />
     </MemoryRouter>
   )
 }
@@ -44,6 +42,7 @@ describe('Case Listing page', () => {
   beforeEach(() => {
     localStorage.clear()
     mockNavigate.mockClear()
+    useCasesStore.setState({ cases: [], loading: false, error: null })
     vi.mocked(api.get).mockResolvedValue({ data: MOCK_CASES, total: MOCK_CASES.length })
     vi.mocked(api.del).mockReset()
   })
@@ -51,10 +50,10 @@ describe('Case Listing page', () => {
   it('renders cases from the API', async () => {
     renderListing()
     await waitFor(() => {
-      expect(screen.getByText('C-001')).toBeInTheDocument()
+      expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument()
     })
-    expect(screen.getByText('Server outage in production')).toBeInTheDocument()
-    expect(screen.getByText('C-004')).toBeInTheDocument()
+    expect(screen.getByText('TM-2024-00123')).toBeInTheDocument()
+    expect(screen.getByText('Kavitha a/p Rajan')).toBeInTheDocument()
   })
 
   it('displays the correct total case count', async () => {
@@ -64,15 +63,14 @@ describe('Case Listing page', () => {
 
   it('shows status badges for cases', async () => {
     renderListing()
-    await waitFor(() => expect(screen.getByText('In Progress')).toBeInTheDocument())
-    expect(screen.getAllByText('Open').length).toBeGreaterThan(0)
-    expect(screen.getByText('Closed')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('Inforce').length).toBeGreaterThan(0))
+    expect(screen.getAllByText('Expired').length).toBeGreaterThan(0)
   })
 
   it('navigates to /cases/new when New Case is clicked', async () => {
     const user = userEvent.setup()
     renderListing()
-    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument())
 
     await user.click(screen.getByRole('button', { name: /new case/i }))
     expect(mockNavigate).toHaveBeenCalledWith('/cases/new')
@@ -81,7 +79,7 @@ describe('Case Listing page', () => {
   it('navigates to the edit page when Edit is clicked on a row', async () => {
     const user = userEvent.setup()
     renderListing()
-    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument())
 
     const editButtons = screen.getAllByRole('button', { name: /edit/i })
     await user.click(editButtons[0])
@@ -104,7 +102,7 @@ describe('Case Listing page', () => {
     const user = userEvent.setup()
     localStorage.setItem('auth_token', 'test-token')
     renderListing()
-    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument())
 
     await user.click(screen.getByRole('button', { name: /log out/i }))
     expect(localStorage.getItem('auth_token')).toBeNull()
@@ -116,12 +114,12 @@ describe('Case Listing page', () => {
     vi.mocked(api.del).mockResolvedValue(null)
     const user = userEvent.setup()
     renderListing()
-    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument())
 
     const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
     await user.click(deleteButtons[0])
 
-    await waitFor(() => expect(screen.queryByText('C-001')).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByText('Ahmad bin Abdullah')).not.toBeInTheDocument())
     expect(api.del).toHaveBeenCalledWith('/api/cases/C-001')
   })
 
@@ -129,12 +127,12 @@ describe('Case Listing page', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     const user = userEvent.setup()
     renderListing()
-    await waitFor(() => expect(screen.getByText('C-001')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument())
 
     const deleteButtons = screen.getAllByRole('button', { name: /delete/i })
     await user.click(deleteButtons[0])
 
     expect(api.del).not.toHaveBeenCalled()
-    expect(screen.getByText('C-001')).toBeInTheDocument()
+    expect(screen.getByText('Ahmad bin Abdullah')).toBeInTheDocument()
   })
 })

@@ -82,6 +82,7 @@ Tests live in `client/src/test/`. Each page has its own test file. The setup fil
 | `@testing-library/user-event` | ^14.5 | Realistic user interaction simulation |
 | `@testing-library/jest-dom` | ^6.6 | Custom DOM matchers (`toBeInTheDocument`, etc.) |
 | `jsdom` | ^26 | Browser-like DOM environment for Vitest |
+| `zustand` | ^5.0 | State management (global cases store + per-mount form stores) |
 
 ## Auth Flow
 
@@ -92,10 +93,27 @@ Tests live in `client/src/test/`. Each page has its own test file. The setup fil
 
 ## State Management
 
-Cases are managed via `CasesContext` (`src/context/CasesContext.jsx`):
-- Persists to `localStorage` under the key `cases`.
-- Provides: `cases`, `addCase(data)`, `updateCase(id, data)`, `getCaseById(id)`.
-- Wrap any new page that needs case data with `useCases()` — the provider is mounted at the root in `App.jsx`.
+State is managed with Zustand. No React Context providers are needed.
+
+### Global store — `src/store/casesStore.ts`
+Module-level singleton. Exposes: `cases`, `loading`, `error`, `fetchCases()`, `addCase()`, `updateCase()`, `deleteCase()`, `reset()`. Call `reset()` on logout to clear stale data.
+
+### Per-mount form stores
+Created with `useState(() => createXxxStore())` so each page mount gets a fresh instance.
+- `src/store/caseFormStore.ts` — all insurance case fields + `saving`/`loadingCase`/`notFound` UI state; `setField(key, value)`, `populate(case)`, `reset()`.
+- `src/store/loginFormStore.ts` — `email`, `password`, `error`, `loading`; `setField(key, value)`.
+
+Pass the store instance (a `StoreApi`) to Zustand-aware field components. Each component subscribes only to its own field slice — only that component re-renders on keystroke.
+
+### Zustand field components (`src/components/`)
+| Component | HTML element | Usage |
+|---|---|---|
+| `ZustandInput` | `<input>` | All text/number inputs; pass `type`, `placeholder`, etc. as props |
+| `ZustandSelect` | `<select>` | Drop-downs; wrap `<option>` tags as children |
+| `ZustandTextarea` | `<textarea>` | Multi-line text |
+| `ZustandDateInput` | `<input type="text">` | Date fields; reads `VITE_DATE_FORMAT` for display/parse |
+
+All four accept `store: StoreApi<any>` and `field: string` as required props.
 
 ## Routing
 
@@ -113,21 +131,21 @@ Defined in `client/src/App.jsx`:
 
 ## Pages
 
-### Login — `client/src/pages/Login.jsx`
+### Login — `client/src/pages/Login.tsx`
 Sign-in form with email + password fields. Validates against mock credentials (`admin@example.com` / `password123`). On success, writes `auth_token` to `localStorage` and navigates to `/cases`. Shows an inline error banner on failure.
 
-### Case Listing — `client/src/pages/CaseListing.jsx`
-Main authenticated view. Displays a table of cases with columns: Case #, Title, Priority, Status, Date, and an Edit link per row. **New Case** button navigates to `/cases/new`. Each row's Edit link navigates to `/cases/:id/edit`. Reads case data from `CasesContext`.
+### Case Listing — `client/src/pages/CaseListing.tsx`
+Main authenticated view. Displays a table of cases with columns: Policy No, Name, NRIC, Eff. Date, Status, Created, and Edit/Delete actions per row. **New Case** button navigates to `/cases/new`. Reads from `useCasesStore`; calls `fetchCases()` on mount.
 
-### API Docs — `client/src/pages/ApiDocs.jsx`
+### API Docs — `client/src/pages/ApiDocs.tsx`
 In-app API reference at `/api-docs`. Linked from the **API Docs** button in the Case Listing header. Documents all REST endpoints (`/auth/login`, `/auth/logout`, `/cases` CRUD) with method badges, request/response JSON examples, parameter tables, and a full error code reference.
 
-### User Guide — `client/src/pages/UserGuide.jsx`
+### User Guide — `client/src/pages/UserGuide.tsx`
 In-app user guide at `/guide`. Linked from the **Help** button in the Case Listing header. Contains a sticky sidebar table of contents and six sections covering: accessing the portal, logging in, viewing cases, creating a case, editing a case, and logging out. All content mirrors `USER_GUIDE.md`.
 
-### Case Form — `client/src/pages/CaseForm.jsx`
-Reusable create/edit form. Operates in two modes:
-- **Create** (`/cases/new`): blank form; calls `addCase()` on submit.
-- **Edit** (`/cases/:id/edit`): pre-populates from `getCaseById(id)`; calls `updateCase()` on submit.
+### Case Form — `client/src/pages/CaseForm.tsx`
+Reusable create/edit form backed by a per-mount `caseFormStore`. Operates in two modes:
+- **Create** (`/cases/new`): blank form; calls `useCasesStore.addCase()` on submit.
+- **Edit** (`/cases/:id/edit`): fetches case via `GET /api/cases/:id`, calls `store.populate(c)`, then `useCasesStore.updateCase()` on submit.
 
-Fields: Title (required), Description, Status (`Open` / `In Progress` / `Closed`), Priority (`Low` / `Medium` / `High`). Back arrow and Cancel both return to `/cases`.
+Five fieldsets: Personal Information (name required, NRIC, passport), Policy Information (insurance, company, policy no, status), Benefit Details (RB entitlement, deductible, co-payment, co-insurance), Policy Dates (effective/expiry/lapse — all `ZustandDateInput`), Other (underwriting exclusion). Back arrow and Cancel both return to `/cases`.

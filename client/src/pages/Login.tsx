@@ -1,27 +1,39 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useStore } from 'zustand'
+import { createLoginFormStore } from '../store/loginFormStore'
 import { api } from '../api'
+import ZustandInput from '../components/ZustandInput'
 
 export default function Login() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [store]  = useState(() => createLoginFormStore())
 
-  const handleSubmit = async (e) => {
+  const error   = useStore(store, (s) => s.error)
+  const loading = useStore(store, (s) => s.loading)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
+    store.setState({ loading: true, error: '' })
+    const { email, password } = store.getState()
     try {
-      const { token } = await api.post('/api/auth/login', form)
+      const { token } = await api.post<{ token: string; expiresIn: number }>('/api/auth/login', {
+        email,
+        password,
+      })
       localStorage.setItem('auth_token', token)
       navigate('/cases')
-    } catch (err) {
-      setError(err?.message ?? 'Invalid email or password.')
+    } catch (err: any) {
+      store.setState({ error: err?.message ?? 'Invalid email or password.' })
     } finally {
-      setLoading(false)
+      store.setState({ loading: false })
     }
   }
+
+  const inputClass =
+    'w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm ' +
+    'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ' +
+    'placeholder:text-slate-400'
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
@@ -45,15 +57,13 @@ export default function Login() {
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Email address
               </label>
-              <input
+              <ZustandInput
+                store={store}
+                field="email"
                 type="email"
                 required
                 autoComplete="email"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
-                           placeholder:text-slate-400"
+                className={inputClass}
                 placeholder="you@example.com"
               />
             </div>
@@ -62,15 +72,13 @@ export default function Login() {
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Password
               </label>
-              <input
+              <ZustandInput
+                store={store}
+                field="password"
                 type="password"
                 required
                 autoComplete="current-password"
-                value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
-                           placeholder:text-slate-400"
+                className={inputClass}
                 placeholder="••••••••"
               />
             </div>

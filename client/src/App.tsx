@@ -1,22 +1,15 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { CasesProvider } from './context/CasesContext'
 import Login from './pages/Login'
 import CaseListing from './pages/CaseListing'
 import CaseForm from './pages/CaseForm'
 import UserGuide from './pages/UserGuide'
 import ApiDocs from './pages/ApiDocs'
 
-// Mounts CasesProvider only when authenticated — prevents an
-// unauthenticated fetch on the login page that causes a spurious 401.
 function ProtectedLayout() {
   if (!localStorage.getItem('auth_token')) {
     return <Navigate to="/login" replace />
   }
-  return (
-    <CasesProvider>
-      <Outlet />
-    </CasesProvider>
-  )
+  return <Outlet />
 }
 
 export default function App() {
