@@ -98,11 +98,101 @@ function Endpoint({ method, path, description, children }: {
 // ─── Nav sections ─────────────────────────────────────────────────────────────
 
 const nav = [
-  { id: 'overview',     label: 'Overview' },
-  { id: 'auth',         label: 'Authentication' },
-  { id: 'cases',        label: 'Cases' },
-  { id: 'errors',       label: 'Error Reference' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'auth',     label: 'Authentication' },
+  { id: 'cases',    label: 'Cases' },
+  { id: 'errors',   label: 'Error Reference' },
 ]
+
+// ─── Example JSON strings ─────────────────────────────────────────────────────
+
+const CASE_OBJECT_EXAMPLE = `{
+  "id": "C-001",
+  "date": "2026-06-01",
+  "name": "Ahmad bin Abdullah",
+  "nric": "801231-10-1234",
+  "passportNo": "",
+  "insurance": "Takaful Malaysia",
+  "company": "ABC Sdn Bhd",
+  "policyNo": "TM-2024-00123",
+  "rbEntitlement": 200.00,
+  "coPayment": 10.00,
+  "coInsurance": "N/A",
+  "deductible": 500.00,
+  "policyEffDate": "2024-01-01",
+  "policyExpDate": "2025-01-01",
+  "policyLapseDate": "",
+  "status": "Inforce",
+  "underwritingExclusion": ""
+}`
+
+const GET_ALL_EXAMPLE = `{
+  "data": [
+    {
+      "id": "C-002",
+      "date": "2026-06-03",
+      "name": "Siti Rahayu bt Yusof",
+      "nric": "900515-14-5678",
+      "passportNo": "",
+      "insurance": "Prudential BSN Takaful",
+      "company": "XYZ Bhd",
+      "policyNo": "PRU-2023-00456",
+      "rbEntitlement": 150.00,
+      "coPayment": 20.00,
+      "coInsurance": "10%",
+      "deductible": 300.00,
+      "policyEffDate": "2023-06-01",
+      "policyExpDate": "2024-06-01",
+      "policyLapseDate": "2024-07-15",
+      "status": "Expired",
+      "underwritingExclusion": "Pre-existing hypertension"
+    },
+    {
+      "id": "C-001",
+      "date": "2026-06-01",
+      "name": "Ahmad bin Abdullah",
+      "nric": "801231-10-1234",
+      "passportNo": "",
+      "insurance": "Takaful Malaysia",
+      "company": "ABC Sdn Bhd",
+      "policyNo": "TM-2024-00123",
+      "rbEntitlement": 200.00,
+      "coPayment": 10.00,
+      "coInsurance": "N/A",
+      "deductible": 500.00,
+      "policyEffDate": "2024-01-01",
+      "policyExpDate": "2025-01-01",
+      "policyLapseDate": "",
+      "status": "Inforce",
+      "underwritingExclusion": ""
+    }
+  ],
+  "total": 2
+}`
+
+const CREATE_REQUEST_EXAMPLE = `{
+  "name": "Lim Wei Jie",
+  "nric": "950820-10-7890",
+  "passportNo": "",
+  "insurance": "AIA Bhd",
+  "company": "Tech Solutions Sdn Bhd",
+  "policyNo": "AIA-2024-00789",
+  "rbEntitlement": 300.00,
+  "coPayment": 0.00,
+  "coInsurance": "5%",
+  "deductible": 250.00,
+  "policyEffDate": "2024-03-15",
+  "policyExpDate": "2025-03-15",
+  "policyLapseDate": "",
+  "status": "Inforce",
+  "underwritingExclusion": ""
+}`
+
+const UPDATE_REQUEST_EXAMPLE = `{
+  "status": "Expired",
+  "policyLapseDate": "2024-09-01",
+  "underwritingExclusion": "Diabetes mellitus type 2"
+}`
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -148,7 +238,7 @@ export default function ApiDocs() {
             <SectionHeading id="overview">Overview</SectionHeading>
             <div className="space-y-4 text-sm text-slate-600">
               <p>
-                The Case Portal REST API allows you to programmatically manage cases.
+                The Case Portal REST API lets you manage insurance cases programmatically.
                 All requests and responses use <InlineCode>application/json</InlineCode>.
               </p>
 
@@ -168,8 +258,8 @@ export default function ApiDocs() {
               <div>
                 <SubHeading>Request Headers</SubHeading>
                 <ParamTable rows={[
-                  ['Content-Type',  'string', 'Yes', 'Must be application/json'],
-                  ['Authorization', 'string', 'Yes*','Bearer <token> — required for all protected endpoints'],
+                  ['Content-Type',  'string', 'Yes',  'Must be application/json'],
+                  ['Authorization', 'string', 'Yes*', 'Bearer <token> — required for all protected endpoints'],
                 ]} />
                 <p className="text-xs text-slate-400">* Not required for POST /api/auth/login</p>
               </div>
@@ -177,11 +267,10 @@ export default function ApiDocs() {
               <div>
                 <SubHeading>Data Types</SubHeading>
                 <ParamTable rows={[
-                  ['string',  'string',  '—', 'UTF-8 text'],
-                  ['integer', 'integer', '—', 'Whole number'],
-                  ['boolean', 'boolean', '—', 'true or false'],
-                  ['enum',    'string',  '—', 'One of a fixed set of values (listed per field)'],
-                  ['ISO date','string',  '—', 'Date in YYYY-MM-DD format'],
+                  ['string',   'string',  '—', 'UTF-8 text'],
+                  ['decimal',  'number',  '—', 'Numeric value with up to 2 decimal places (currency or percentage)'],
+                  ['enum',     'string',  '—', 'One of a fixed set of values (listed per field)'],
+                  ['ISO date', 'string',  '—', 'Date in YYYY-MM-DD format; empty string when not set'],
                 ]} />
               </div>
             </div>
@@ -200,8 +289,8 @@ export default function ApiDocs() {
               <div>
                 <SubHeading>Request Body</SubHeading>
                 <ParamTable rows={[
-                  ['email',    'string', 'Yes', 'The user\'s email address'],
-                  ['password', 'string', 'Yes', 'The user\'s password'],
+                  ['email',    'string', 'Yes', "The user's email address"],
+                  ['password', 'string', 'Yes', "The user's password"],
                 ]} />
                 <Code>{`{
   "email": "admin@example.com",
@@ -218,8 +307,9 @@ export default function ApiDocs() {
   "expiresIn": 86400
 }`}</Code>
                 <p className="text-xs text-slate-400 mt-1">
-                  Store the <InlineCode>token</InlineCode> and send it as <InlineCode>Authorization: Bearer &lt;token&gt;</InlineCode> on every subsequent request.
-                  The token is valid for <InlineCode>expiresIn</InlineCode> seconds (24 hours).
+                  Store the <InlineCode>token</InlineCode> and send it as{' '}
+                  <InlineCode>Authorization: Bearer &lt;token&gt;</InlineCode> on every subsequent request.
+                  Valid for <InlineCode>expiresIn</InlineCode> seconds (24 hours).
                 </p>
               </div>
             </Endpoint>
@@ -243,68 +333,32 @@ export default function ApiDocs() {
             <div className="mb-6">
               <SubHeading>Case Object</SubHeading>
               <ParamTable rows={[
-                ['id',          'string',  '—',  'Auto-generated identifier, e.g. C-001'],
-                ['title',       'string',  '—',  'Short summary of the issue'],
-                ['description', 'string',  '—',  'Full details of the issue'],
-                ['status',      'enum',    '—',  'Open | In Progress | Closed'],
-                ['priority',    'enum',    '—',  'Low | Medium | High'],
-                ['date',        'ISO date','—',  'Date the case was created'],
+                ['id',                   'string',   '—', 'Auto-generated identifier, e.g. C-001'],
+                ['date',                 'ISO date', '—', 'Date the case was created (server-assigned)'],
+                ['name',                 'string',   '—', "Insured person's full name"],
+                ['nric',                 'string',   '—', 'National Registration Identity Card number'],
+                ['passportNo',           'string',   '—', 'Passport number (if applicable)'],
+                ['insurance',            'string',   '—', 'Insurer / takaful operator name'],
+                ['company',              'string',   '—', "Insured's employer or company"],
+                ['policyNo',             'string',   '—', 'Policy or certificate number'],
+                ['rbEntitlement',        'decimal',  '—', 'Room & board entitlement in RM'],
+                ['coPayment',            'decimal',  '—', 'Co-payment percentage (%)'],
+                ['coInsurance',          'string',   '—', 'Co-takaful / co-insurance terms, e.g. "10%" or "N/A"'],
+                ['deductible',           'decimal',  '—', 'Deductible amount in RM'],
+                ['policyEffDate',        'ISO date', '—', 'Policy effective date; empty string if not set'],
+                ['policyExpDate',        'ISO date', '—', 'Policy expiry date; empty string if not set'],
+                ['policyLapseDate',      'ISO date', '—', 'Policy lapse date; empty string if not set'],
+                ['status',               'enum',     '—', 'Inforce | Expired'],
+                ['underwritingExclusion','string',   '—', 'Free-text list of exclusions'],
               ]} />
+              <SubHeading>Example</SubHeading>
+              <Code>{CASE_OBJECT_EXAMPLE}</Code>
             </div>
 
             <Endpoint method="GET" path="/api/cases" description="Return a list of all cases, newest first.">
               <div>
                 <SubHeading>Response — 200 OK</SubHeading>
-                <Code>{`{
-  "data": [
-    {
-      "id": "C-004",
-      "title": "Dashboard chart renders empty",
-      "description": "The line chart shows no data after refresh.",
-      "status": "Open",
-      "priority": "Medium",
-      "date": "2026-06-05"
-    },
-    {
-      "id": "C-003",
-      "title": "Export PDF feature not working",
-      "description": "PDF export throws a 500 error on large datasets.",
-      "status": "Closed",
-      "priority": "Low",
-      "date": "2026-05-28"
-    }
-  ],
-  "total": 2
-}`}</Code>
-              </div>
-            </Endpoint>
-
-            <Endpoint method="POST" path="/api/cases" description="Create a new case. The id and date are assigned by the server.">
-              <div>
-                <SubHeading>Request Body</SubHeading>
-                <ParamTable rows={[
-                  ['title',       'string', 'Yes', 'Short summary of the issue'],
-                  ['description', 'string', 'No',  'Full details of the issue'],
-                  ['status',      'enum',   'Yes', 'Open | In Progress | Closed'],
-                  ['priority',    'enum',   'Yes', 'Low | Medium | High'],
-                ]} />
-                <Code>{`{
-  "title": "Server outage in production",
-  "description": "Production servers went down at 3am.",
-  "status": "Open",
-  "priority": "High"
-}`}</Code>
-              </div>
-              <div>
-                <SubHeading>Response — 201 Created</SubHeading>
-                <Code>{`{
-  "id": "C-005",
-  "title": "Server outage in production",
-  "description": "Production servers went down at 3am.",
-  "status": "Open",
-  "priority": "High",
-  "date": "2026-06-07"
-}`}</Code>
+                <Code>{GET_ALL_EXAMPLE}</Code>
               </div>
             </Endpoint>
 
@@ -317,18 +371,47 @@ export default function ApiDocs() {
               </div>
               <div>
                 <SubHeading>Response — 200 OK</SubHeading>
+                <Code>{CASE_OBJECT_EXAMPLE}</Code>
+              </div>
+            </Endpoint>
+
+            <Endpoint method="POST" path="/api/cases" description="Create a new case. id and date are assigned by the server.">
+              <div>
+                <SubHeading>Request Body</SubHeading>
+                <ParamTable rows={[
+                  ['name',                 'string',  'Yes', 'Full name of the insured person (max 200 chars)'],
+                  ['nric',                 'string',  'No',  'NRIC number'],
+                  ['passportNo',           'string',  'No',  'Passport number'],
+                  ['insurance',            'string',  'No',  'Insurer / takaful operator'],
+                  ['company',              'string',  'No',  'Employer or company'],
+                  ['policyNo',             'string',  'No',  'Policy or certificate number'],
+                  ['rbEntitlement',        'decimal', 'No',  'Room & board entitlement in RM (default 0)'],
+                  ['coPayment',            'decimal', 'No',  'Co-payment percentage (default 0)'],
+                  ['coInsurance',          'string',  'No',  'Co-takaful / co-insurance terms'],
+                  ['deductible',           'decimal', 'No',  'Deductible in RM (default 0)'],
+                  ['policyEffDate',        'ISO date','No',  'Effective date (YYYY-MM-DD or empty)'],
+                  ['policyExpDate',        'ISO date','No',  'Expiry date (YYYY-MM-DD or empty)'],
+                  ['policyLapseDate',      'ISO date','No',  'Lapse date (YYYY-MM-DD or empty)'],
+                  ['status',               'enum',    'Yes', 'Inforce | Expired (default Inforce)'],
+                  ['underwritingExclusion','string',  'No',  'Free-text exclusion notes'],
+                ]} />
+                <Code>{CREATE_REQUEST_EXAMPLE}</Code>
+              </div>
+              <div>
+                <SubHeading>Response — 201 Created</SubHeading>
+                <p className="text-xs text-slate-500 mb-2">
+                  Returns the full Case Object with the server-assigned <InlineCode>id</InlineCode> and <InlineCode>date</InlineCode>.
+                </p>
                 <Code>{`{
-  "id": "C-001",
-  "title": "Server outage in production",
-  "description": "Production servers went down at 3am.",
-  "status": "Open",
-  "priority": "High",
-  "date": "2026-06-01"
+  "id": "C-005",
+  "date": "2026-06-08",
+  "name": "Lim Wei Jie",
+  ...
 }`}</Code>
               </div>
             </Endpoint>
 
-            <Endpoint method="PUT" path="/api/cases/:id" description="Update an existing case. Only include the fields you want to change.">
+            <Endpoint method="PUT" path="/api/cases/:id" description="Update an existing case. Only include the fields you want to change; omitted fields are left unchanged.">
               <div>
                 <SubHeading>Path Parameters</SubHeading>
                 <ParamTable rows={[
@@ -337,26 +420,39 @@ export default function ApiDocs() {
               </div>
               <div>
                 <SubHeading>Request Body</SubHeading>
+                <p className="text-xs text-slate-500 mb-2">
+                  All fields are optional. Any field present in the body replaces the stored value.
+                </p>
                 <ParamTable rows={[
-                  ['title',       'string', 'No', 'Updated title'],
-                  ['description', 'string', 'No', 'Updated description'],
-                  ['status',      'enum',   'No', 'Open | In Progress | Closed'],
-                  ['priority',    'enum',   'No', 'Low | Medium | High'],
+                  ['name',                 'string',  'No', 'Updated name'],
+                  ['nric',                 'string',  'No', 'Updated NRIC'],
+                  ['passportNo',           'string',  'No', 'Updated passport number'],
+                  ['insurance',            'string',  'No', 'Updated insurer'],
+                  ['company',              'string',  'No', 'Updated company'],
+                  ['policyNo',             'string',  'No', 'Updated policy number'],
+                  ['rbEntitlement',        'decimal', 'No', 'Updated RB entitlement in RM'],
+                  ['coPayment',            'decimal', 'No', 'Updated co-payment %'],
+                  ['coInsurance',          'string',  'No', 'Updated co-insurance terms'],
+                  ['deductible',           'decimal', 'No', 'Updated deductible in RM'],
+                  ['policyEffDate',        'ISO date','No', 'Updated effective date'],
+                  ['policyExpDate',        'ISO date','No', 'Updated expiry date'],
+                  ['policyLapseDate',      'ISO date','No', 'Updated lapse date'],
+                  ['status',               'enum',    'No', 'Inforce | Expired'],
+                  ['underwritingExclusion','string',  'No', 'Updated exclusion notes'],
                 ]} />
-                <Code>{`{
-  "status": "In Progress",
-  "priority": "High"
-}`}</Code>
+                <Code>{UPDATE_REQUEST_EXAMPLE}</Code>
               </div>
               <div>
                 <SubHeading>Response — 200 OK</SubHeading>
+                <p className="text-xs text-slate-500 mb-2">Returns the full updated Case Object.</p>
                 <Code>{`{
   "id": "C-001",
-  "title": "Server outage in production",
-  "description": "Production servers went down at 3am.",
-  "status": "In Progress",
-  "priority": "High",
-  "date": "2026-06-01"
+  "date": "2026-06-01",
+  "name": "Ahmad bin Abdullah",
+  "status": "Expired",
+  "policyLapseDate": "2024-09-01",
+  "underwritingExclusion": "Diabetes mellitus type 2",
+  ...
 }`}</Code>
               </div>
             </Endpoint>
@@ -401,12 +497,12 @@ export default function ApiDocs() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {[
-                    ['400', 'VALIDATION_ERROR',    'A required field is missing or has an invalid value.'],
-                    ['401', 'UNAUTHORIZED',         'No token provided or the token is invalid / expired.'],
-                    ['403', 'FORBIDDEN',            'The authenticated user does not have permission.'],
-                    ['404', 'NOT_FOUND',            'The requested resource does not exist.'],
-                    ['409', 'CONFLICT',             'The request conflicts with the current state.'],
-                    ['500', 'INTERNAL_SERVER_ERROR','An unexpected server error occurred.'],
+                    ['400', 'VALIDATION_ERROR',     'A required field is missing or has an invalid value.'],
+                    ['401', 'UNAUTHORIZED',          'No token provided or the token is invalid / expired.'],
+                    ['403', 'FORBIDDEN',             'The authenticated user does not have permission.'],
+                    ['404', 'NOT_FOUND',             'The requested resource does not exist.'],
+                    ['409', 'CONFLICT',              'The request conflicts with the current state.'],
+                    ['500', 'INTERNAL_SERVER_ERROR', 'An unexpected server error occurred.'],
                   ].map(([status, code, desc]) => (
                     <tr key={code}>
                       <td className="px-4 py-3 font-mono text-xs text-slate-500">{status}</td>
