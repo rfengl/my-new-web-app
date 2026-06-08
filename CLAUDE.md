@@ -65,7 +65,7 @@ npm test          # watch mode
 npm run test:run  # single run (CI)
 ```
 
-Tests live in `client/src/test/`. Each page has its own test file. The setup file is `src/test/setup.js` (imports `@testing-library/jest-dom`).
+Tests live in `client/src/test/`. Each page has its own test file. The setup file is `src/test/setup.ts` (imports `@testing-library/jest-dom`).
 
 ## Frontend Modules
 
@@ -87,9 +87,9 @@ Tests live in `client/src/test/`. Each page has its own test file. The setup fil
 ## Auth Flow
 
 - On login, a token is stored in `localStorage` under `auth_token`.
-- `PrivateRoute` in `App.jsx` checks for this token; redirects to `/login` if absent.
-- Logout clears the token and redirects to `/login`.
-- Currently uses mock credentials — replace with real API calls when the backend is ready.
+- `ProtectedLayout` in `App.tsx` checks for this token; redirects to `/login` if absent.
+- Logout clears the token, calls `useCasesStore.reset()`, and redirects to `/login`.
+- Login calls `POST /api/auth/login` on the backend; demo credentials are `admin@example.com` / `password123`.
 
 ## State Management
 
@@ -117,7 +117,7 @@ All four accept `store: StoreApi<any>` and `field: string` as required props.
 
 ## Routing
 
-Defined in `client/src/App.jsx`:
+Defined in `client/src/App.tsx`:
 
 | Path | Component | Access |
 |---|---|---|
@@ -141,7 +141,7 @@ Main authenticated view. Displays a table of cases with columns: Policy No, Name
 In-app API reference at `/api-docs`. Linked from the **API Docs** button in the Case Listing header. Documents all REST endpoints (`/auth/login`, `/auth/logout`, `/cases` CRUD) with method badges, request/response JSON examples, parameter tables, and a full error code reference.
 
 ### User Guide — `client/src/pages/UserGuide.tsx`
-In-app user guide at `/guide`. Linked from the **Help** button in the Case Listing header. Contains a sticky sidebar table of contents and six sections covering: accessing the portal, logging in, viewing cases, creating a case, editing a case, and logging out. All content mirrors `USER_GUIDE.md`.
+In-app user guide at `/guide`. Linked from the **Help** button in the Case Listing header. Contains a sticky sidebar table of contents and seven sections: accessing the portal, logging in, viewing cases, creating a case (with per-fieldset field tables), editing a case, deleting a case, and logging out.
 
 ### Case Form — `client/src/pages/CaseForm.tsx`
 Reusable create/edit form backed by a per-mount `caseFormStore`. Operates in two modes:
