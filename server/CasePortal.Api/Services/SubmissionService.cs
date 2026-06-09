@@ -9,23 +9,14 @@ public class SubmissionService(IMembershipService memberships) : ISubmissionServ
     private readonly Lock _lock    = new();
     private          int  _counter = 0;
 
-    public IEnumerable<SubmissionGL> GetAll(string membershipId)
+    public SubmissionGL? GetById(string id)
     {
-        lock (_lock) return _submissions
-            .Where(s => s.MembershipId == membershipId)
-            .OrderByDescending(s => s.CreatedDate)
-            .ToList();
+        lock (_lock) return _submissions.FirstOrDefault(s => s.Id == id);
     }
 
-    public SubmissionGL? GetById(string membershipId, string id)
+    public SubmissionGL? Create(CreateSubmissionRequest req)
     {
-        lock (_lock) return _submissions
-            .FirstOrDefault(s => s.MembershipId == membershipId && s.Id == id);
-    }
-
-    public SubmissionGL? Create(string membershipId, CreateSubmissionRequest req)
-    {
-        if (memberships.GetById(membershipId) is null) return null;
+        if (memberships.GetById(req.MembershipId) is null) return null;
 
         lock (_lock)
         {
@@ -33,7 +24,7 @@ public class SubmissionService(IMembershipService memberships) : ISubmissionServ
             var next = new SubmissionGL
             {
                 Id               = $"GL-{_counter:D3}",
-                MembershipId     = membershipId,
+                MembershipId     = req.MembershipId,
                 SubmissionStatus = req.SubmissionStatus,
                 RequestType      = req.RequestType,
                 GlType           = req.GlType,
@@ -41,15 +32,16 @@ public class SubmissionService(IMembershipService memberships) : ISubmissionServ
                 CreatedDate      = DateTime.UtcNow.ToString("yyyy-MM-dd"),
             };
             _submissions.Add(next);
+            memberships.SetSubmissionId(req.MembershipId, next.Id);
             return next;
         }
     }
 
-    public SubmissionGL? Update(string membershipId, string id, UpdateSubmissionRequest req)
+    public SubmissionGL? Update(string id, UpdateSubmissionRequest req)
     {
         lock (_lock)
         {
-            var s = _submissions.FirstOrDefault(x => x.MembershipId == membershipId && x.Id == id);
+            var s = _submissions.FirstOrDefault(x => x.Id == id);
             if (s is null) return null;
 
             if (req.SubmissionStatus is not null) s.SubmissionStatus = req.SubmissionStatus;
@@ -61,11 +53,11 @@ public class SubmissionService(IMembershipService memberships) : ISubmissionServ
         }
     }
 
-    public bool Delete(string membershipId, string id)
+    public bool Delete(string id)
     {
         lock (_lock)
         {
-            var s = _submissions.FirstOrDefault(x => x.MembershipId == membershipId && x.Id == id);
+            var s = _submissions.FirstOrDefault(x => x.Id == id);
             if (s is null) return false;
             _submissions.Remove(s);
             return true;

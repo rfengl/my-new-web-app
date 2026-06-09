@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CarFix · Volvo API Integration Study — MVP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ── Reset & tokens ─────────────────────────────────────── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --red: #c8202f;
+        --red-dark: #9f1623;
+        --red-light: #fdeeef;
+        --navy: #1f2a37;
+        --navy-2: #2a3645;
+        --green: #10b981;
+        --amber: #f59e0b;
+        --blue: #2563eb;
+        --g50: #f9fafb;
+        --g100: #f3f4f6;
+        --g150: #eceef2;
+        --g200: #e5e7eb;
+        --g300: #d1d5db;
+        --g400: #9ca3af;
+        --g500: #6b7280;
+        --g600: #4b5563;
+        --g700: #374151;
+        --g800: #1f2937;
+        --sidebar-w: 252px;
+        --topbar-h: 56px;
+      }
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 15px; line-height: 1.65; color: var(--navy);
+        background: #fff; -webkit-font-smoothing: antialiased;
+      }
+
+      /* ── Top bar ────────────────────────────────────────────── */
+      .topbar {
+        position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+        background: var(--navy); display: flex; align-items: center;
+        padding: 0 28px; gap: 16px; z-index: 100;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07);
+      }
+      .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+      .topbar-logo-icon {
+        width: 30px; height: 30px; background: var(--red); border-radius: 7px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 13px; color: #fff; letter-spacing: 0.02em;
+      }
+      .topbar-logo-text { font-weight: 700; font-size: 16px; color: #fff; letter-spacing: -0.01em; }
+      .topbar-pill {
+        padding: 3px 10px; background: rgba(200, 32, 47, 0.25);
+        border: 1px solid rgba(200, 32, 47, 0.45); border-radius: 999px;
+        font-size: 11px; font-weight: 600; color: #fca5a5;
+        letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      .topbar-parent-link {
+        margin-left: auto; font-size: 12px; color: rgba(255, 255, 255, 0.7);
+        text-decoration: none; padding: 5px 10px; border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: background 0.12s, color 0.12s;
+      }
+      .topbar-parent-link:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+      /* ── Layout ─────────────────────────────────────────────── */
+      .layout { display: flex; padding-top: var(--topbar-h); min-height: 100vh; }
+      .sidebar {
+        position: fixed; top: var(--topbar-h); left: 0;
+        width: var(--sidebar-w); height: calc(100vh - var(--topbar-h));
+        overflow-y: auto; background: var(--g50);
+        border-right: 1px solid var(--g150); padding: 20px 0 40px;
+      }
+      .sidebar::-webkit-scrollbar { width: 4px; }
+      .sidebar::-webkit-scrollbar-thumb { background: var(--g300); border-radius: 2px; }
+      .toc-title {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--g400); padding: 0 20px 8px;
+      }
+      .toc-group {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--g400); padding: 14px 20px 4px;
+      }
+      .toc-link {
+        display: block; padding: 5px 20px; font-size: 12.5px; font-weight: 500;
+        color: var(--g600); text-decoration: none; border-left: 2px solid transparent;
+        transition: color 0.12s, background 0.12s, border-color 0.12s;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .toc-link:hover { background: var(--g100); color: var(--navy); }
+      .toc-link.active { color: var(--red); border-left-color: var(--red); background: var(--red-light); font-weight: 600; }
+      .toc-link.sub { padding-left: 32px; font-size: 12px; }
+
+      .main {
+        margin-left: var(--sidebar-w); flex: 1;
+        padding: 48px 56px 80px; max-width: 940px;
+      }
+      @media (max-width: 900px) {
+        .sidebar { display: none; }
+        .main { margin-left: 0; padding: 32px 24px 60px; }
+      }
+
+      /* ── Typography ──────────────────────────────────────────── */
+      .doc-title {
+        font-size: 30px; font-weight: 800; color: var(--navy);
+        letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 8px;
+      }
+      .doc-subtitle { font-size: 15px; color: var(--g500); margin-bottom: 18px; line-height: 1.5; }
+      .doc-meta {
+        display: flex; flex-wrap: wrap; gap: 14px; padding: 12px 16px;
+        background: var(--g50); border: 1px solid var(--g200); border-radius: 10px;
+        margin-bottom: 36px; font-size: 12.5px; color: var(--g600);
+      }
+      .doc-meta strong { color: var(--navy); font-weight: 600; }
+
+      h2 {
+        font-size: 20px; font-weight: 700; color: var(--navy);
+        letter-spacing: -0.015em; margin: 48px 0 16px;
+        padding-bottom: 10px; border-bottom: 2px solid var(--g150);
+        display: flex; align-items: center; gap: 10px;
+      }
+      h2:first-of-type { margin-top: 0; }
+      h2 .h2-num {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px; background: var(--red); color: #fff;
+        border-radius: 8px; font-size: 12px; font-weight: 700; flex-shrink: 0;
+      }
+      h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin: 32px 0 12px; letter-spacing: -0.01em; }
+      h4 {
+        font-size: 13px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; color: var(--g500); margin: 22px 0 8px;
+      }
+      p { margin-bottom: 12px; color: var(--g700); }
+      p:last-child { margin-bottom: 0; }
+      strong { color: var(--navy); font-weight: 600; }
+      em { font-style: italic; color: var(--g600); }
+      code {
+        font-family: "JetBrains Mono", "SF Mono", monospace;
+        font-size: 12.5px; background: var(--g100); color: var(--red-dark);
+        padding: 1px 6px; border-radius: 4px; border: 1px solid var(--g200);
+      }
+      hr { border: none; border-top: 1px solid var(--g150); margin: 36px 0; }
+      ul, ol { padding-left: 20px; color: var(--g700); display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+      li { line-height: 1.6; }
+      li strong { color: var(--navy); }
+      blockquote {
+        background: #eff6ff; border-left: 3px solid #93c5fd; border-radius: 0 8px 8px 0;
+        padding: 12px 16px; margin: 16px 0; font-size: 13.5px; color: #1e40af;
+      }
+      blockquote.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+      blockquote.info { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+      /* ── Tables ──────────────────────────────────────────────── */
+      .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; border: 1px solid var(--g200); }
+      table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+      thead tr { background: var(--g50); }
+      th {
+        padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em; color: var(--g500);
+        border-bottom: 1px solid var(--g200); white-space: nowrap;
+      }
+      td { padding: 10px 14px; border-bottom: 1px solid var(--g100); color: var(--g700); vertical-align: top; }
+      tr:last-child td { border-bottom: none; }
+      tr:hover td { background: var(--g50); }
+      td.center, th.center { text-align: center; }
+      td code, th code { font-size: 11.5px; }
+
+      /* ── Code blocks ─────────────────────────────────────────── */
+      pre {
+        background: #0f172a; color: #e2e8f0; border-radius: 10px;
+        padding: 18px 20px; overflow-x: auto;
+        font-family: "JetBrains Mono", monospace; font-size: 12.5px;
+        line-height: 1.7; margin: 14px 0;
+      }
+      pre code { background: none; color: inherit; border: none; padding: 0; font-size: inherit; }
+      pre .c { color: #64748b; }
+      pre .k { color: #7dd3fc; }
+      pre .s { color: #86efac; }
+      pre .p { color: #94a3b8; }
+      pre .n { color: #fde68a; }
+      pre .arrow { color: #f472b6; }
+
+      /* ── FR cards ────────────────────────────────────────────── */
+      .fr-card {
+        background: #fff; border: 1px solid var(--g200); border-radius: 12px;
+        margin: 16px 0; overflow: hidden;
+      }
+      .fr-card-header {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 18px; background: var(--g50);
+        border-bottom: 1px solid var(--g200);
+      }
+      .fr-id {
+        font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700;
+        background: var(--red); color: #fff; padding: 3px 8px;
+        border-radius: 6px; letter-spacing: 0.04em;
+      }
+      .fr-id.nfr { background: var(--navy); }
+      .fr-title { font-size: 15px; font-weight: 700; color: var(--navy); flex: 1; }
+      .fr-priority {
+        font-size: 10px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; padding: 3px 8px; border-radius: 999px;
+      }
+      .fr-priority.must { background: #fee2e2; color: var(--red-dark); }
+      .fr-priority.should { background: #e0f2fe; color: #075985; }
+      .fr-priority.could { background: var(--g100); color: var(--g600); }
+      .fr-body { padding: 12px 18px; }
+      .fr-row {
+        display: grid; grid-template-columns: 130px 1fr; gap: 12px;
+        font-size: 13px; padding: 7px 0;
+        border-bottom: 1px dashed var(--g150);
+      }
+      .fr-row:last-child { border-bottom: none; }
+      .fr-row .lbl {
+        font-weight: 700; color: var(--g500); text-transform: uppercase;
+        font-size: 10.5px; letter-spacing: 0.07em; padding-top: 2px;
+      }
+      .fr-row .val { color: var(--g700); line-height: 1.6; }
+      .fr-row .val ul { padding-left: 16px; margin: 0; gap: 2px; }
+      .fr-row .val code { font-size: 11.5px; }
+      .src-list { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--g600); }
+      .src-list .file { display: block; padding: 1px 0; }
+
+      /* ── Acceptance criteria boxes ───────────────────────────── */
+      .ac-block {
+        background: #f0fdf4; border: 1px solid #bbf7d0;
+        border-radius: 10px; padding: 12px 16px; margin: 8px 0;
+        font-size: 13px; color: #166534;
+      }
+      .ac-block .ac-id {
+        font-family: "JetBrains Mono", monospace; font-weight: 700;
+        font-size: 11px; color: #047857; margin-right: 8px;
+      }
+      .ac-block .gwt { display: block; padding: 2px 0; }
+      .ac-block .gwt b { color: #14532d; font-weight: 700; margin-right: 4px; }
+
+      /* ── YAML → HTML cross-links ─────────────────────────────── */
+      .yml-link {
+        color: inherit; text-decoration: none;
+        border-bottom: 1px dotted var(--red);
+        transition: background 0.12s, border-color 0.12s;
+      }
+      .yml-link:hover { background: var(--red-light); border-bottom-color: var(--red-dark); }
+      .yml-link:hover code { background: var(--red-light); }
+      .src-list .yml-link { border-bottom: 1px dotted var(--g400); color: inherit; }
+      .src-list .yml-link:hover { border-bottom-color: var(--red); color: var(--red-dark); }
+
+      /* ── Tier filter on §1.4 inventory ───────────────────────── */
+      .tier-filter {
+        display: flex; flex-wrap: wrap; align-items: center;
+        gap: 8px; margin: 14px 0 10px; padding: 10px 14px;
+        background: var(--g50); border: 1px solid var(--g200);
+        border-radius: 10px; font-size: 13px;
+      }
+      .tier-filter-label {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; color: var(--g500); margin-right: 4px;
+      }
+      .tier-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 12px; border-radius: 999px;
+        background: #fff; border: 1px solid var(--g200);
+        font-size: 12.5px; font-weight: 600; color: var(--g700);
+        cursor: pointer; font-family: inherit;
+        transition: background 0.12s, border-color 0.12s, color 0.12s;
+      }
+      .tier-pill:hover { border-color: var(--g400); color: var(--navy); }
+      .tier-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
+      .tier-pill .tier-count {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 20px; padding: 0 6px; height: 18px;
+        border-radius: 999px; font-size: 11px; font-weight: 700;
+        background: var(--g100); color: var(--g600);
+      }
+      .tier-pill.active .tier-count { background: rgba(255, 255, 255, 0.25); color: #fff; }
+      tr.tier-hidden { display: none; }
+
+      /* ── MVP banner ──────────────────────────────────────────── */
+      .mvp-banner {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #f59e0b; border-radius: 10px;
+        padding: 12px 16px; margin: 0 0 24px; font-size: 13.5px; color: #78350f;
+      }
+      .mvp-banner strong { color: #78350f; }
+      .mvp-banner a { color: #78350f; text-decoration: underline; font-weight: 600; }
+
+      /* ── Print rules ─────────────────────────────────────────── */
+      @page { size: A4; margin: 18mm 14mm; }
+      @media print {
+        body { font-size: 11pt; color: #000; background: #fff; }
+        .topbar, .sidebar, .tier-filter { display: none !important; }
+        .layout { padding-top: 0; }
+        .main { margin-left: 0 !important; padding: 0 !important; max-width: none !important; }
+        h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
+        .fr-card, .ac-block, table, pre, .flow, blockquote, .mvp-banner {
+          page-break-inside: avoid; break-inside: avoid;
+        }
+        pre, code { font-size: 9.5pt; }
+        a { color: inherit; text-decoration: none; border-bottom: none; }
+        th, td { padding: 5px 8px; }
+        .doc-title { font-size: 24pt; }
+        h2 { font-size: 16pt; }
+        h3 { font-size: 13pt; }
+        h4 { font-size: 11pt; }
+        tr.tier-hidden { display: table-row !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="topbar-logo" href="#"><div class="topbar-logo-icon">CF</div><span class="topbar-logo-text">CarFix</span></a>
+      <span class="topbar-pill">Volvo API Study · MVP · v1.0</span>
+      <a class="topbar-parent-link" href="RSA-Integration-Analysis.html" title="Open the full (non-MVP) study">↗ Full study</a>
+    </header>
+
+    <div class="layout">
+      <nav class="sidebar" id="toc">
+        <div class="toc-title">Contents · MVP</div>
+
+        <a class="toc-link" href="#doc-control">0. Document Control</a>
+
+        <div class="toc-group">1. Introduction</div>
+        <a class="toc-link sub" href="#purpose">1.1 Purpose</a>
+        <a class="toc-link sub" href="#scope">1.2 Scope</a>
+        <a class="toc-link sub" href="#defs">1.3 Definitions</a>
+        <a class="toc-link sub" href="#refs">1.4 References</a>
+
+        <div class="toc-group">2. System Overview</div>
+        <a class="toc-link sub" href="#service">2.1 Service description</a>
+        <a class="toc-link sub" href="#arch">2.2 Architecture</a>
+        <a class="toc-link sub" href="#regions">2.3 Regions</a>
+
+        <a class="toc-link" href="#actors">3. Actors &amp; Roles</a>
+
+        <div class="toc-group">4. Functional Requirements (MVP)</div>
+        <a class="toc-link sub" href="#fr-001">FR-001 · M2M Auth</a>
+        <a class="toc-link sub" href="#fr-002">FR-002 · Subscriptions</a>
+        <a class="toc-link sub" href="#fr-003">FR-003 · bCall / iCall</a>
+        <a class="toc-link sub" href="#fr-004">FR-004 · xCall lifecycle</a>
+        <a class="toc-link sub" href="#fr-005">FR-005 · Vehicle ID</a>
+        <a class="toc-link sub" href="#fr-007">FR-007 · Vehicle status</a>
+        <a class="toc-link sub" href="#fr-008">FR-008 · Push channel</a>
+        <a class="toc-link sub" href="#fr-011">FR-011 · Alarm (RAM)</a>
+        <a class="toc-link sub" href="#fr-017">FR-017 · Tenant config</a>
+        <a class="toc-link sub" href="#fr-018">FR-018 · Privacy</a>
+        <a class="toc-link sub" href="#fr-019">FR-019 · Secret rotation</a>
+
+        <a class="toc-link" href="#nfr">5. Non-Functional Requirements</a>
+
+        <div class="toc-group">6. Data Specifications</div>
+        <a class="toc-link sub" href="#data-token">6.1 OAuth token</a>
+        <a class="toc-link sub" href="#data-envelope">6.2 xCall envelope</a>
+        <a class="toc-link sub" href="#data-ids">6.3 Vehicle IDs</a>
+        <a class="toc-link sub" href="#data-cmd">6.4 Command state</a>
+        <a class="toc-link sub" href="#data-headers">6.5 Headers</a>
+
+        <div class="toc-group">7. Topology &amp; Channels</div>
+        <a class="toc-link sub" href="#region-matrix">7.1 Region matrix</a>
+        <a class="toc-link sub" href="#channels">7.2 Channels</a>
+        <a class="toc-link sub" href="#flows">7.3 End-to-end flow</a>
+        <a class="toc-link sub" href="#workflows">7.4 API workflow recipes</a>
+
+        <a class="toc-link" href="#rules">8. Validation Rules</a>
+        <a class="toc-link" href="#errors">9. Error Handling</a>
+        <a class="toc-link" href="#ac">10. Acceptance Criteria</a>
+
+        <div class="toc-group">11. Roadmap</div>
+        <a class="toc-link sub" href="#schedule-phases">11.1 Phases</a>
+        <a class="toc-link sub" href="#schedule-timeline">11.2 Timeline</a>
+        <a class="toc-link sub" href="#schedule-milestones">11.3 Milestones</a>
+        <a class="toc-link sub" href="#schedule-assumptions">11.4 Assumptions</a>
+
+        <a class="toc-link" href="#glossary">12. Glossary</a>
+        <a class="toc-link" href="#questions">13. Questions for Volvo</a>
+      </nav>
+
+      <main class="main">
+        <p class="doc-title">CarFix · Volvo API Integration Study — MVP</p>
+        <p class="doc-subtitle">
+          Trimmed MVP variant of the parent study. Covers only the minimum
+          API surface CarFix needs to deliver Roadside Assistance to Volvo
+          drivers at first launch. Elevated remote commands, ownership
+          gate, EV history, and fleet provisioning are deferred post-MVP.
+        </p>
+        <div class="doc-meta">
+          <div><strong>Doc ID:</strong> CF-VOL-001-MVP</div>
+          <div><strong>Version:</strong> 1.0</div>
+          <div><strong>Date:</strong> 2026-05-10</div>
+          <div><strong>Status:</strong> Draft for joint review with Volvo</div>
+          <div><strong>Author:</strong> CarFix Business Analysis</div>
+          <div><strong>Audience:</strong> CarFix BA · CarFix Engineering · Volvo Technical Team</div>
+        </div>
+
+        <div class="mvp-banner">
+          <strong>MVP scope.</strong> The following requirements are deliberately <strong>excluded</strong> from this document:
+          <strong>FR-006</strong> (ownership gate),
+          <strong>FR-009</strong> (RDL door unlock),
+          <strong>FR-010</strong> (RHF honk &amp; flash),
+          <strong>FR-012</strong> (RSI / REC start-inhibit &amp; engine),
+          <strong>FR-013</strong> (POI navigation),
+          <strong>FR-014</strong> (RCS / RDC),
+          <strong>FR-015</strong> (EV charging history),
+          <strong>FR-016</strong> (fleet provisioning).
+          They remain valid backlog items in the <a href="RSA-Integration-Analysis.html">full study</a> and are scheduled for a post-launch phase.
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="doc-control"><span class="h2-num">0</span> Document Control</h2>
+        <p>
+          This is the <strong>MVP-scoped</strong> companion to
+          <a href="RSA-Integration-Analysis.html"><code>RSA-Integration-Analysis.html</code></a>.
+          It describes the absolute minimum integration CarFix needs to receive
+          vehicle-initiated bCall / iCall events, identify the caller, manage the
+          service lifecycle, observe live vehicle state, and trigger the alarm —
+          nothing more. The full Tier 2 / Tier 3 remote command surface,
+          ownership gate, EV history, and fleet provisioning are intentionally
+          excluded so the joint-review session with Volvo can focus on
+          first-launch readiness.
+        </p>
+        <p>
+          The MVP excludes the following requirements from the parent study:
+          <strong>FR-006</strong> (ownership gate), <strong>FR-009</strong> (RDL),
+          <strong>FR-010</strong> (RHF), <strong>FR-012</strong> (RSI / REC),
+          <strong>FR-013</strong> (POI), <strong>FR-014</strong> (RCS / RDC),
+          <strong>FR-015</strong> (EV charging history), <strong>FR-016</strong>
+          (fleet provisioning). These remain valid backlog items and are left
+          as-is in the parent document — they will be re-introduced in a
+          post-launch phase, gated on liability sign-off (RDL, RSI, REC), EV
+          market scope (FR-015), and Volvo's provisioning model for fleet
+          creation (FR-016).
+        </p>
+        <h4>Revision history</h4>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Version</th><th>Date</th><th>Author</th><th>Summary</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1.0</strong></td><td><strong>2026-05-10</strong></td><td>CarFix BA</td>
+                <td>MVP carve-out from <code>RSA-Integration-Analysis.md</code> v0.2; removed FR-006, FR-009, FR-010, FR-012 – FR-016 and downstream sections; re-tiered DAM Admin and EV Charging Log as out-of-scope for MVP.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="intro"><span class="h2-num">1</span> Introduction</h2>
+
+        <h3 id="purpose">1.1 Purpose</h3>
+        <p>
+          Volvo provided CarFix with 15 OpenAPI specifications and asked
+          us to integrate our call center to deliver Roadside Assistance to
+          Volvo drivers. <strong>This document is CarFix's MVP study</strong> —
+          it scopes the <em>minimum</em> integration that allows the CarFix
+          call center to:
+        </p>
+        <ol>
+          <li>Receive a vehicle-initiated bCall / iCall.</li>
+          <li>Identify the caller and the vehicle.</li>
+          <li>Track the active xCall service through to closure.</li>
+          <li>Observe live vehicle state to inform dispatch.</li>
+          <li>Trigger the vehicle alarm if needed (panic-light scenario).</li>
+        </ol>
+        <p>
+          Anything beyond that — door unlock, ownership verification at API
+          level, location nudges, EV charging history, start-inhibit, engine
+          control, POI, fleet provisioning — is excluded from MVP and tracked
+          in the parent study.
+        </p>
+
+        <h3 id="scope">1.2 Scope</h3>
+        <p><strong>In scope for MVP</strong></p>
+        <ul>
+          <li>Receiving vehicle-initiated emergency / breakdown events (bCall, iCall) at the CarFix call center.</li>
+          <li>Identifying the caller's vehicle and customer from VIN, plate, or MSISDN.</li>
+          <li>Managing the lifecycle of an active xCall service from the CarFix agent desktop.</li>
+          <li>Triggering or querying the vehicle alarm (RAM) — the only remote command in MVP scope.</li>
+          <li>Live vehicle status (fuel / EV charge level, doors, ignition, mileage) and last-known position via DAM.</li>
+          <li>Real-time push and / or long-poll consumption of WirelessCar notifications.</li>
+          <li>One-time tenant notification configuration.</li>
+          <li>GDPR / data-subject handling for any personal data persisted on CarFix systems.</li>
+        </ul>
+        <p><strong>Out of MVP scope</strong> <em>(deferred — see parent study)</em></p>
+        <ul>
+          <li>API-level ownership verification (<code>/vehicles/{id}/user-relations</code>). For MVP, the agent verifies the caller's identity verbally during the call; the API-level gate is added in a later phase.</li>
+          <li>Remote door unlock (RDL), honk-and-flash (RHF), POI nav, RCS / RDC, start-inhibit (RSI), engine control (REC) — deferred pending elevated scope grants and liability sign-off.</li>
+          <li>EV charging history (<a class="yml-link" href="ev-charging-log-service.html" target="_blank" rel="noopener" title="Open ev-charging-log-service docs"><code>ev-charging-log-service.yml</code></a>) — deferred until EV market scope is confirmed.</li>
+          <li>Fleet provisioning via DAM Admin (<code>POST /fleets</code> etc.) — for MVP we assume Volvo / WirelessCar provisions CarFix's fleet for us during onboarding; we do not exercise the admin API.</li>
+          <li>Vehicle telematics ingestion (Volvo / WirelessCar own this end-to-end).</li>
+          <li>Volvo's own customer-facing apps (Volvo On-Call, Volvo Cars app).</li>
+          <li>CarFix's own tow-operator dispatch, payment, and CRM systems.</li>
+          <li>The <a class="yml-link" href="fleet-authentication-api.html" target="_blank" rel="noopener" title="Open fleet-authentication-api docs"><code>fleet-authentication-api.yml</code></a> token issuer — <code>COMPANY_INTERNAL</code>, not the issuer for external partners (Q-01).</li>
+        </ul>
+
+        <h3 id="defs">1.3 Definitions &amp; Acronyms</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><strong>CarFix</strong></td><td>The call-center service company integrating with Volvo / WirelessCar to deliver Roadside Assistance</td></tr>
+              <tr><td><strong>RSA</strong></td><td>Roadside Assistance — the service category CarFix delivers to Volvo drivers</td></tr>
+              <tr><td><strong>MVP</strong></td><td>Minimum Viable Product — the scope covered by this document</td></tr>
+              <tr><td><strong>Volvo</strong></td><td>Volvo Cars — the OEM and CarFix's contracting party</td></tr>
+              <tr><td><strong>WirelessCar</strong></td><td>Volvo's telematics service provider; operates the APIs catalogued in §1.4</td></tr>
+              <tr><td><strong>CCS</strong></td><td>Call Center Services — WirelessCar's product suite for OEM call centers</td></tr>
+              <tr><td><strong>bCall</strong></td><td>Breakdown Call — vehicle-initiated request triggered by driver SOS or vehicle fault</td></tr>
+              <tr><td><strong>iCall</strong></td><td>Information Call — vehicle-initiated, non-emergency assistance request</td></tr>
+              <tr><td><strong>xCall</strong></td><td>Umbrella term covering bCall + iCall as one service primitive</td></tr>
+              <tr><td><strong>M2M</strong></td><td>Machine-to-Machine — service-to-service authentication via OAuth 2.0 Client Credentials</td></tr>
+              <tr><td><strong>JWT / JWS</strong></td><td>JSON Web Token (RFC 7519); here used as a signed bearer token</td></tr>
+              <tr><td><strong>JWKS</strong></td><td>JSON Web Key Set — the public keys used to verify WirelessCar-issued JWTs</td></tr>
+              <tr><td><strong>VIN</strong></td><td>Vehicle Identification Number — 17-character ISO-3779 vehicle ID</td></tr>
+              <tr><td><strong>MSISDN</strong></td><td>Mobile Subscriber ISDN — the SIM number of the vehicle's embedded modem</td></tr>
+              <tr><td><strong>Tenant</strong></td><td>Logical isolation boundary in WirelessCar; CarFix will be provisioned as one tenant</td></tr>
+              <tr><td><strong>DAM</strong></td><td>Data Access Management API — fleet/vehicle data plane</td></tr>
+              <tr><td><strong>RAM</strong></td><td>Remote Alarm Management — the only Remote Service command family in MVP scope</td></tr>
+              <tr><td><strong>Region</strong></td><td>EU (<code>*.wirelesscar.cloud</code>), NA (<code>*.na.*.wirelesscar.cloud</code>), CN (<code>*.wcar-cloud.cn</code>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="refs">1.4 References — Volvo / WirelessCar OpenAPI inventory (MVP view)</h3>
+        <p>
+          The same 15 OpenAPI specifications from the parent study, retiered
+          for the MVP scope. The "<strong>MVP tier</strong>" column reflects this
+          document only; specs marked <em>— · post-MVP</em> are still listed
+          in the parent study at their original tier.
+        </p>
+        <div class="tier-filter" role="tablist" aria-label="Filter inventory by MVP tier">
+          <span class="tier-filter-label">Show:</span>
+          <button type="button" class="tier-pill active" data-filter="all">All <span class="tier-count">15</span></button>
+          <button type="button" class="tier-pill" data-filter="must">Must integrate <span class="tier-count">5</span></button>
+          <button type="button" class="tier-pill" data-filter="should">Should integrate <span class="tier-count">6</span></button>
+          <button type="button" class="tier-pill" data-filter="could">Could integrate <span class="tier-count">1</span></button>
+          <button type="button" class="tier-pill" data-filter="post-mvp">Post-MVP <span class="tier-count">2</span></button>
+          <button type="button" class="tier-pill" data-filter="none">Not needed <span class="tier-count">1</span></button>
+        </div>
+        <div class="table-wrap">
+          <table id="inventory-table">
+            <thead><tr><th>File</th><th>Title</th><th>Version</th><th>What it does (MVP one-liner)</th><th class="center">MVP tier</th></tr></thead>
+            <tbody>
+              <tr data-tier="must"><td><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener" title="Open access-management-m2m-api docs"><code>access-management-m2m-api.yml</code></a></td><td>Access Management M2M</td><td>1.4.0</td><td>Issues OAuth2 JWT tokens we use on every other call; rotates our client secret.</td><td class="center"><strong>1 · Must</strong></td></tr>
+              <tr data-tier="none"><td><a class="yml-link" href="fleet-authentication-api.html" target="_blank" rel="noopener" title="Open fleet-authentication-api docs"><code>fleet-authentication-api.yml</code></a></td><td>Fleet Authentication</td><td>1.0.0</td><td>Volvo-internal token issuer (<code>COMPANY_INTERNAL</code>). CarFix does <em>not</em> use this — confirm Q-01.</td><td class="center">— · n/a</td></tr>
+              <tr data-tier="must"><td><a class="yml-link" href="call-center-services-master-data-adapter.html" target="_blank" rel="noopener" title="Open call-center-services-master-data-adapter docs"><code>call-center-services-master-data-adapter.yml</code></a></td><td>CCS · Master Data Adapter</td><td>0.3.0</td><td>Look up Volvo customers and vehicles by VIN / plate / MSISDN.</td><td class="center"><strong>1 · Must</strong></td></tr>
+              <tr data-tier="must"><td><a class="yml-link" href="call-center-services-xcall-downlink-notification-api.html" target="_blank" rel="noopener" title="Open call-center-services-xcall-downlink-notification-api docs"><code>call-center-services-xcall-downlink-notification-api.yml</code></a></td><td>CCS · xCall Downlink Notification</td><td>1.4.0</td><td>Long-poll endpoint where vehicle-initiated bCall / iCall events arrive at CarFix.</td><td class="center"><strong>1 · Must</strong></td></tr>
+              <tr data-tier="must"><td><a class="yml-link" href="call-center-services-downlink-subscriptions-api.html" target="_blank" rel="noopener" title="Open call-center-services-downlink-subscriptions-api docs"><code>call-center-services-downlink-subscriptions-api.yml</code></a></td><td>CCS · Downlink Subscriptions</td><td>3.4.0</td><td>Register the SQS subscription that drives the downlink notifications above.</td><td class="center"><strong>1 · Must</strong></td></tr>
+              <tr data-tier="must"><td><a class="yml-link" href="call-center-services-xcall-consumer.html" target="_blank" rel="noopener" title="Open call-center-services-xcall-consumer docs"><code>call-center-services-xcall-consumer.yml</code></a></td><td>CCS · xCall Consumer</td><td>1.4.1</td><td>xCall service lifecycle from the CarFix agent side: start, update, terminate, clear.</td><td class="center"><strong>1 · Must</strong></td></tr>
+              <tr data-tier="should"><td><a class="yml-link" href="call-center-services-remote-service.html" target="_blank" rel="noopener" title="Open call-center-services-remote-service docs"><code>call-center-services-remote-service.yml</code></a></td><td>CCS · Remote Service (RAM only)</td><td>0.2.7</td><td>Trigger / query the vehicle alarm. Only the <strong>RAM</strong> family is in MVP; RDL, RHF, POI, RCS, RDC, RSI, REC are post-MVP.</td><td class="center">2 · Should</td></tr>
+              <tr data-tier="should"><td><a class="yml-link" href="data-access-management-api.html" target="_blank" rel="noopener" title="Open data-access-management-api docs"><code>data-access-management-api.yml</code></a></td><td>Data Access Management (DAM)</td><td>1.2.0</td><td>Live vehicle status (fuel / EV charge, doors, ignition, mileage); last-known position.</td><td class="center">2 · Should</td></tr>
+              <tr data-tier="should"><td><a class="yml-link" href="call-center-services-notifications-manager.html" target="_blank" rel="noopener" title="Open call-center-services-notifications-manager docs"><code>call-center-services-notifications-manager.yml</code></a></td><td>CCS · Notifications Manager (WebSocket)</td><td>1.7.0</td><td><code>wss://</code> push channel — alternative to long-poll for real-time state updates.</td><td class="center">2 · Should</td></tr>
+              <tr data-tier="should"><td><a class="yml-link" href="call-center-services-consumer-notifications.html" target="_blank" rel="noopener" title="Open call-center-services-consumer-notifications docs"><code>call-center-services-consumer-notifications.yml</code></a></td><td>CCS · Consumer Notifications</td><td>3.2.0</td><td>Long-poll downstream notifications. Choose either this or the WebSocket above.</td><td class="center">2 · Should</td></tr>
+              <tr data-tier="should"><td><a class="yml-link" href="call-center-services-consumer-subscriptions-api.html" target="_blank" rel="noopener" title="Open call-center-services-consumer-subscriptions-api docs"><code>call-center-services-consumer-subscriptions-api.yml</code></a></td><td>CCS · Consumer Subscriptions</td><td>1.1.2</td><td>Manages subscriptions for the Consumer Notifications channel.</td><td class="center">2 · Should</td></tr>
+              <tr data-tier="should"><td><a class="yml-link" href="call-center-services-tenant-configuration-admin.html" target="_blank" rel="noopener" title="Open call-center-services-tenant-configuration-admin docs"><code>call-center-services-tenant-configuration-admin.yml</code></a></td><td>CCS · Tenant Configuration Admin</td><td>1.0.0</td><td>One-time tenant config — how CarFix receives consumer notifications.</td><td class="center">2 · Should</td></tr>
+              <tr data-tier="could"><td><a class="yml-link" href="call-center-services-privacy-api.html" target="_blank" rel="noopener" title="Open call-center-services-privacy-api docs"><code>call-center-services-privacy-api.yml</code></a></td><td>CCS · Privacy</td><td>1.3.0</td><td>GDPR data-subject fetch / purge — only if CarFix persists vehicle-personal data.</td><td class="center">3 · Could</td></tr>
+              <tr data-tier="post-mvp"><td><a class="yml-link" href="data-access-management-admin-api.html" target="_blank" rel="noopener" title="Open data-access-management-admin-api docs"><code>data-access-management-admin-api.yml</code></a></td><td>DAM Admin</td><td>1.0.0</td><td>Fleet provisioning. <strong>Out of MVP</strong> — we assume Volvo provisions our fleet for us during onboarding.</td><td class="center">— · post-MVP</td></tr>
+              <tr data-tier="post-mvp"><td><a class="yml-link" href="ev-charging-log-service.html" target="_blank" rel="noopener" title="Open ev-charging-log-service docs"><code>ev-charging-log-service.yml</code></a></td><td>EV Charging Log</td><td>1.3.0</td><td>Charging-session history. <strong>Out of MVP</strong> — EV market scope deferred.</td><td class="center">— · post-MVP</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <blockquote class="info">
+          <strong>MVP tier definitions.</strong>
+          <strong>Tier 1 · Must</strong> — required for MVP go-live.
+          <strong>Tier 2 · Should</strong> — needed for the in-scope MVP features (RAM alarm, live status, real-time push, tenant config).
+          <strong>Tier 3 · Could</strong> — situational; included only when partner-stored personal data triggers GDPR obligations.
+          <strong>— · post-MVP</strong> — not exercised in the MVP integration; tracked in the parent study for a later phase.
+        </blockquote>
+        <p>Public WirelessCar developer portal: <code>https://console.wirelesscar.com</code>.</p>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="overview"><span class="h2-num">2</span> System Overview</h2>
+
+        <h3 id="service">2.1 Service description</h3>
+        <p>
+          CarFix delivers roadside assistance (towing, jump-start, fuel
+          delivery, lock-out recovery, accident response) to Volvo drivers
+          covered by Volvo's service contract. <strong>WirelessCar</strong>
+          is the telematics intermediary: it relays vehicle-emitted xCall
+          events to CarFix, exposes vehicle and customer master data, and
+          proxies the alarm command back to the vehicle. The CarFix call
+          center never speaks directly to the vehicle — every interaction
+          flows through the WirelessCar API surface.
+        </p>
+        <p>
+          Lock-out recovery, locate-and-honk, POI nudges, and engine-control
+          remediations are part of CarFix's longer-term service offering but
+          are <strong>not</strong> part of this MVP — for MVP, those
+          scenarios are handled by on-site dispatch (tow / locksmith) rather
+          than remote command.
+        </p>
+
+        <h3 id="arch">2.2 Integration architecture</h3>
+<pre><code>                 <span class="p">┌─────────────────────────────────────┐</span>
+                 <span class="p">│           Volvo Vehicle             │</span>
+                 <span class="p">│  (TCU / embedded modem · in-car UI) │</span>
+                 <span class="p">└───────────────────┬─────────────────┘</span>
+                                     <span class="c">│  (proprietary uplink)</span>
+                                     <span class="arrow">▼</span>
+        <span class="p">┌─────────────────────────────────────────────────────┐</span>
+        <span class="p">│                  WirelessCar Cloud                  │</span>
+        <span class="p">│  EU · NA · CN  (regional isolation, no failover)    │</span>
+        <span class="p">│                                                     │</span>
+        <span class="p">│  ┌────────────────┐  ┌────────────────────────────┐ │</span>
+        <span class="p">│  │</span> <span class="k">Access Mgmt</span>    <span class="p">│  │</span> <span class="k">Call Center Services</span>       <span class="p">│ │</span>
+        <span class="p">│  │</span> <span class="s">M2M (OAuth 2)</span>  <span class="p">│  │</span> <span class="s">xCall · RAM · Notify</span>       <span class="p">│ │</span>
+        <span class="p">│  └────────────────┘  └────────────────────────────┘ │</span>
+        <span class="p">│  ┌────────────────┐  ┌────────────────────────────┐ │</span>
+        <span class="p">│  │</span> <span class="k">Master Data</span>    <span class="p">│  │</span> <span class="k">Data Access Mgmt (read)</span>    <span class="p">│ │</span>
+        <span class="p">│  └────────────────┘  └────────────────────────────┘ │</span>
+        <span class="p">└────────────┬─────────────────────────┬──────────────┘</span>
+                     <span class="c">│                         │</span>
+                <span class="n">southbound</span>                <span class="n">northbound</span>
+              (downlink events)          (queries · alarm)
+                     <span class="arrow">▼</span>                         <span class="arrow">▼</span>
+        <span class="p">┌─────────────────────────────────────────────────────┐</span>
+        <span class="p">│             CarFix Call Center (us)                 │</span>
+        <span class="p">│   Agent desktop · Dispatcher · Tow operator API     │</span>
+        <span class="p">└─────────────────────────────────────────────────────┘</span></code></pre>
+
+        <h3 id="regions">2.3 Deployment regions</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Region</th><th>Hostname suffix</th><th>Comment</th></tr></thead>
+            <tbody>
+              <tr><td><strong>EU</strong></td><td><code>*.wirelesscar.cloud</code></td><td>Primary launch market. All MVP-scoped APIs available.</td></tr>
+              <tr><td><strong>NA</strong></td><td><code>*.na.wirelesscar.cloud</code></td><td>CCS APIs and Access Management M2M available. <strong>Not</strong> advertised in <a class="yml-link" href="data-access-management-api.html" target="_blank" rel="noopener" title="Open data-access-management-api docs"><code>data-access-management-api.yml</code></a> — confirm with Volvo (Q-10) before assuming NA coverage for live vehicle status.</td></tr>
+              <tr><td><strong>CN</strong></td><td><code>*.wcar-cloud.cn</code></td><td>All MVP-scoped APIs available. Sovereignty-isolated; tokens issued in CN cannot be used in EU/NA and vice-versa.</td></tr>
+              <tr><td><strong>NonProd</strong></td><td><code>*.nonprod.*.wirelesscar.cloud</code></td><td>Provided for several CCS specs. Use during SIT and partner testing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <blockquote class="warn">
+          <strong>No automatic regional failover.</strong> CarFix must select a region per environment configuration; cross-region failover is not a WirelessCar feature.
+        </blockquote>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="actors"><span class="h2-num">3</span> Actors &amp; Roles</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Actor</th><th>Role</th><th>Goals</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Volvo driver / occupant</strong></td><td>End customer triggering or receiving roadside assistance.</td><td>Get help fast; minimise time-to-tow; share location and vehicle context with one tap.</td></tr>
+              <tr><td><strong>Volvo vehicle (TCU)</strong></td><td>Embedded telematics unit emitting xCall events and accepting the RAM alarm command relayed via WirelessCar.</td><td>Reliably notify the OEM stack on driver SOS, breakdown, or crash.</td></tr>
+              <tr><td><strong>Volvo (OEM)</strong></td><td>CarFix's contracting party; owns the vehicle fleet and the customer relationship.</td><td>Have a competent RSA partner connected to the vehicle stack; satisfy data-controller obligations.</td></tr>
+              <tr><td><strong>Volvo technical team</strong></td><td>Volvo / WirelessCar engineers reviewing this document with CarFix.</td><td>Confirm CarFix's MVP interpretation; provision the tenant, scopes, and test vehicles; resolve §13 questions.</td></tr>
+              <tr><td><strong>WirelessCar</strong></td><td>Volvo's telematics service provider; operates the APIs catalogued in §1.4.</td><td>Mediate between the vehicle fleet and authorised partner consumers like CarFix.</td></tr>
+              <tr><td><strong>CarFix call-center agent</strong></td><td>Human operator at CarFix who answers calls, dispatches services, and updates case state. <strong>For MVP, the agent verbally confirms caller identity</strong> since API-level ownership verification is post-MVP.</td><td>Identify the caller's vehicle and policy in &lt; 30 s; dispatch the right service; close the case.</td></tr>
+              <tr><td><strong>CarFix dispatcher / TMS</strong></td><td>CarFix-internal system orchestrating tow operators and field providers.</td><td>Receive a structured xCall event; allocate the correct provider.</td></tr>
+              <tr><td><strong>CarFix backend</strong></td><td>The CarFix-side system that holds OAuth credentials and persists case state.</td><td>Hold M2M secrets securely; rotate them; mediate every WirelessCar call.</td></tr>
+              <tr><td><em>Tow operator / field provider</em></td><td><em>Out of scope for this document.</em></td><td><em>Receives dispatch from CarFix TMS; integration is CarFix-internal.</em></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="frs"><span class="h2-num">4</span> Functional Requirements (MVP)</h2>
+        <p>
+          FR-IDs are preserved from the parent study for traceability — gaps
+          (FR-006, FR-009, FR-010, FR-012 – FR-016) are intentional and indicate
+          the requirement is <strong>deferred post-MVP</strong>. Each requirement
+          is identified by an <code>FR-NNN</code> tag with a MoSCoW priority. The
+          <em>API source</em> row points at the specific YAML and endpoint(s)
+          that satisfy the requirement.
+        </p>
+
+        <div class="fr-card" id="fr-001">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-001</span>
+            <span class="fr-title">M2M Authentication</span>
+            <span class="fr-priority must">Must</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Obtain a short-lived JWT bearer token used to authenticate every other call into the WirelessCar surface.</div></div>
+            <div class="fr-row"><div class="lbl">Trigger</div><div class="val">Token cache miss, expiry, or scheduled secret rotation.</div></div>
+            <div class="fr-row"><div class="lbl">Inputs</div><div class="val"><code>client_id</code>, <code>client_secret</code>, <code>grant_type=client_credentials</code>, target <code>audience</code>, <code>tenant</code>, plus per-action scopes such as <code>Read_RAM</code>, <code>Write_RAM</code>.</div></div>
+            <div class="fr-row"><div class="lbl">Processing</div><div class="val">Cache tokens until <code>exp − 60 s</code>; refresh proactively; verify any inbound JWT using the JWKS at <code>GET /oauth/.well-known/jwks.json</code>.</div></div>
+            <div class="fr-row"><div class="lbl">Outputs</div><div class="val">A signed JWT presented as <code>Authorization: Bearer &lt;token&gt;</code> on every downstream call.</div></div>
+            <div class="fr-row"><div class="lbl">Validation</div><div class="val">Token must validate against the regional JWKS; audience and scope claims must match the target endpoint family.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener">access-management-m2m-api.yml</a> — POST /v2/oauth/token</span>
+              <span class="file"><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener">access-management-m2m-api.yml</a> — GET /oauth/.well-known/jwks.json</span>
+            </div></div>
+            <div class="fr-row"><div class="lbl">Note</div><div class="val"><a class="yml-link" href="fleet-authentication-api.html" target="_blank" rel="noopener" title="Open fleet-authentication-api docs"><code>fleet-authentication-api.yml</code></a> is <em>not</em> the right issuer for CarFix — it is <code>x-audience: COMPANY_INTERNAL</code>. <em>Confirm Q-01.</em></div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-002">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-002</span>
+            <span class="fr-title">Subscribe to vehicle downlink events</span>
+            <span class="fr-priority must">Must</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Register a subscription so vehicle-initiated events (bCall, iCall, status, alerts) are routed to CarFix.</div></div>
+            <div class="fr-row"><div class="lbl">Trigger</div><div class="val">One-time during onboarding; subsequent updates only when filter criteria change.</div></div>
+            <div class="fr-row"><div class="lbl">Outputs</div><div class="val">A <code>subscriptionId</code> to be used by FR-003 / FR-008.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-downlink-subscriptions-api.html" target="_blank" rel="noopener">call-center-services-downlink-subscriptions-api.yml</a> — POST /subscriptions, GET /subscriptions, PUT /subscriptions/{subscriptionId}, DELETE /subscriptions/{subscriptionId}, POST /subscriptions/{subscriptionId}/confirmation</span>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-003">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-003</span>
+            <span class="fr-title">Receive inbound bCall / iCall</span>
+            <span class="fr-priority must">Must</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">CarFix consumes vehicle-initiated emergency and information calls and acknowledges receipt so they are not re-delivered.</div></div>
+            <div class="fr-row"><div class="lbl">Trigger</div><div class="val">A vehicle emits bCall (driver SOS, fault) or iCall (information request); WirelessCar enqueues to the CarFix downlink topic.</div></div>
+            <div class="fr-row"><div class="lbl">Processing</div><div class="val"><ul>
+              <li>Long-poll the notification endpoint; the call returns within ~20 s, with 0 – 10 messages per response.</li>
+              <li>Each message carries <code>serviceId</code>, call type (<code>bCall</code> / <code>iCall</code>), vehicle identifiers, location, occupants, vehicle state snapshot, and a <code>receiptHandle</code>.</li>
+              <li>Acknowledge each handled message within the visibility window.</li>
+            </ul></div></div>
+            <div class="fr-row"><div class="lbl">Outputs</div><div class="val">Persisted CarFix case keyed on <code>serviceId</code>.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-xcall-downlink-notification-api.html" target="_blank" rel="noopener">call-center-services-xcall-downlink-notification-api.yml</a> — GET /notifications/{subscriptionId}, PUT /notifications/{subscriptionId}/acknowledgement</span>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-004">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-004</span>
+            <span class="fr-title">Manage active call lifecycle</span>
+            <span class="fr-priority must">Must</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">CarFix agent updates, terminates, or clears an active xCall service; may also create a service from the partner side.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-xcall-consumer.html" target="_blank" rel="noopener">call-center-services-xcall-consumer.yml</a> — POST /services/started, GET /services/{serviceId}, GET /services/{serviceId}/events, PUT /services/{serviceId}/updated, PUT /services/{serviceId}/terminated, PUT /services/{serviceId}/cleared</span>
+            </div></div>
+            <div class="fr-row"><div class="lbl">Validation</div><div class="val">State transitions follow the CCS service-state machine. Terminal states are immutable.</div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-005">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-005</span>
+            <span class="fr-title">Identify vehicle and customer</span>
+            <span class="fr-priority must">Must</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Look up a vehicle by VIN, registration plate, or embedded SIM number; resolve the registered driver(s) for <em>display</em> on the agent desktop.</div></div>
+            <div class="fr-row"><div class="lbl">Trigger</div><div class="val">Inbound call answered (from FR-003) or customer phones in manually.</div></div>
+            <div class="fr-row"><div class="lbl">Inputs</div><div class="val">One of <code>vehicleIdType ∈ {VEHICLE_IDENTIFIER, VIN, MSISDN}</code> + identifier value, OR a free-text plate via search.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-master-data-adapter.html" target="_blank" rel="noopener">call-center-services-master-data-adapter.yml</a> — GET /vehicles/{vehicleId}, POST /search/vehicles, GET /vehicles/{vehicleId}/services, GET /users/{userId}, POST /search/users</span>
+            </div></div>
+            <div class="fr-row"><div class="lbl">MVP note</div><div class="val">The agent uses this data to <em>display</em> the registered driver alongside the caller-stated identity for verbal verification. The API-level ownership cross-check (<code>/vehicles/{id}/user-relations</code>) is post-MVP — see parent study FR-006.</div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-007">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-007</span>
+            <span class="fr-title">Real-time vehicle status</span>
+            <span class="fr-priority should">Should</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Retrieve current door-lock state, fuel / EV charge, mileage, engine state, and last known position — used by the agent to inform dispatch (e.g. fuel-low → fuel delivery, doors-locked → locksmith).</div></div>
+            <div class="fr-row"><div class="lbl">Region</div><div class="val">DAM ships <strong>EU + CN</strong> servers only; NA usage requires Volvo confirmation (Q-10).</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="data-access-management-api.html" target="_blank" rel="noopener">data-access-management-api.yml</a> — GET /fleets/{fleetIdentifier}/vehicles/{vehicleIdentifier}/status, .../position, bulk variants, /info, /vehicles, /trips</span>
+            </div></div>
+            <div class="fr-row"><div class="lbl">MVP note</div><div class="val">CarFix reads vehicle status; <strong>no remediation command</strong> is issued in MVP except RAM alarm (FR-011). All other remote actions are dispatched on-site.</div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-008">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-008</span>
+            <span class="fr-title">Real-time push of state changes</span>
+            <span class="fr-priority should">Should</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Channel choice</div><div class="val"><ul>
+              <li><strong>WebSocket push</strong> — <code>wss://api.notifications.call-center-services.*</code> via <a class="yml-link" href="call-center-services-notifications-manager.html" target="_blank" rel="noopener" title="Open call-center-services-notifications-manager docs"><code>call-center-services-notifications-manager.yml</code></a> (<code>$connect</code>, <code>$disconnect</code>, <code>publish</code>, <code>acknowledge</code>).</li>
+              <li><strong>HTTP long-poll</strong> — <a class="yml-link" href="call-center-services-consumer-notifications.html" target="_blank" rel="noopener" title="Open call-center-services-consumer-notifications docs"><code>call-center-services-consumer-notifications.yml</code></a> (<code>GET /notifications/{subscriptionId}</code>, <code>PUT .../acknowledgement</code>) paired with <a class="yml-link" href="call-center-services-consumer-subscriptions-api.html" target="_blank" rel="noopener" title="Open call-center-services-consumer-subscriptions-api docs"><code>call-center-services-consumer-subscriptions-api.yml</code></a>.</li>
+            </ul></div></div>
+            <div class="fr-row"><div class="lbl">MVP rec.</div><div class="val">Long-poll for first launch; WebSocket evaluated post-MVP if latency demands it. <em>Q-05 to Volvo for confirmation.</em></div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-011">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-011</span>
+            <span class="fr-title">Trigger or query alarm (RAM)</span>
+            <span class="fr-priority should">Should</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Trigger or query the vehicle alarm — used in SOS / panic-light scenarios where the driver needs to draw attention to a parked vehicle (e.g. theft suspicion or lost-vehicle locate at low risk). The only Remote Service command family in MVP scope.</div></div>
+            <div class="fr-row"><div class="lbl">Inputs</div><div class="val"><code>vehicleId</code> (resolved via FR-005), command body per spec.</div></div>
+            <div class="fr-row"><div class="lbl">Processing</div><div class="val"><code>POST</code> the command; poll <code>GET .../RAM/commands/{commandId}</code> until terminal state (<code>Success</code> / <code>Failure</code> / <code>Timeout</code>); never auto-retry on <code>Timeout</code>.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-remote-service.html" target="_blank" rel="noopener">call-center-services-remote-service.yml</a> — POST /vehicles/{vehicleId}/services/RAM/commands</span>
+              <span class="file"><a class="yml-link" href="call-center-services-remote-service.html" target="_blank" rel="noopener">call-center-services-remote-service.yml</a> — GET /vehicles/{vehicleId}/services/RAM/commands/{commandId}</span>
+            </div></div>
+            <div class="fr-row"><div class="lbl">Validation</div><div class="val">Requires <code>Read_RAM</code> / <code>Write_RAM</code> scope provisioned by WirelessCar. <em>MVP guardrail:</em> the command is gated at the CarFix UI to a verified active xCall <code>serviceId</code> (i.e. the driver is on the line) — API-level ownership verification is post-MVP.</div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-017">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-017</span>
+            <span class="fr-title">Tenant notification configuration (one-time)</span>
+            <span class="fr-priority should">Should</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Configure how CarFix receives consumer notifications for the tenant.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-tenant-configuration-admin.html" target="_blank" rel="noopener">call-center-services-tenant-configuration-admin.yml</a> — GET / POST / PUT / DELETE /configurations/consumer/notifications</span>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-018">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-018</span>
+            <span class="fr-title">GDPR data-subject requests</span>
+            <span class="fr-priority could">Could</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Service Volvo data controllers' requests for personal data export or purge that touch the CarFix-side store.</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="call-center-services-privacy-api.html" target="_blank" rel="noopener">call-center-services-privacy-api.yml</a> — GET /vehicles/{vehicleId} (initiate fetch — returns receipt)</span>
+              <span class="file"><a class="yml-link" href="call-center-services-privacy-api.html" target="_blank" rel="noopener">call-center-services-privacy-api.yml</a> — POST /vehicles/{vehicleId} (purge), GET /receipts/{receiptId} (status / download)</span>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="fr-card" id="fr-019">
+          <div class="fr-card-header">
+            <span class="fr-id">FR-019</span>
+            <span class="fr-title">Client secret rotation</span>
+            <span class="fr-priority must">Must</span>
+          </div>
+          <div class="fr-body">
+            <div class="fr-row"><div class="lbl">Description</div><div class="val">Rotate CarFix's M2M secret at least every 90 days, or on suspected compromise (Q-04 to Volvo).</div></div>
+            <div class="fr-row"><div class="lbl">API source</div><div class="val src-list">
+              <span class="file"><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener">access-management-m2m-api.yml</a> — POST /secret-rotation/client-secret-create (expires_in 30 – 365 days)</span>
+              <span class="file"><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener">access-management-m2m-api.yml</a> — DELETE /secret-rotation/client-secret-delete</span>
+            </div></div>
+            <div class="fr-row"><div class="lbl">Validation</div><div class="val">Rotation MUST overlap (create new → cut over → delete old).</div></div>
+          </div>
+        </div>
+
+        <blockquote class="warn">
+          <strong>Excluded from MVP</strong> <em>(see <a href="RSA-Integration-Analysis.html">parent study</a>)</em>: FR-006 ownership gate, FR-009 RDL door unlock, FR-010 RHF honk-and-flash, FR-012 RSI / REC start-inhibit and engine control, FR-013 POI navigation, FR-014 RCS connectivity / RDC door control, FR-015 EV charging history, FR-016 fleet provisioning.
+        </blockquote>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="nfr"><span class="h2-num">5</span> Non-Functional Requirements</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Title</th><th class="center">Priority</th></tr></thead>
+            <tbody>
+              <tr><td><code>NFR-001</code></td><td>Authentication &amp; token handling</td><td class="center"><strong>Must</strong></td></tr>
+              <tr><td><code>NFR-002</code></td><td>Region routing &amp; data residency</td><td class="center"><strong>Must</strong></td></tr>
+              <tr><td><code>NFR-003</code></td><td>Observability &amp; correlation (W3C <code>traceparent</code>)</td><td class="center"><strong>Must</strong></td></tr>
+              <tr><td><code>NFR-004</code></td><td>Channel selection (push vs poll)</td><td class="center">Should</td></tr>
+              <tr><td><code>NFR-005</code></td><td>Permission tiers &amp; elevated commands <em>(only <code>Read_RAM</code> / <code>Write_RAM</code> in MVP)</em></td><td class="center"><strong>Must</strong></td></tr>
+              <tr><td><code>NFR-006</code></td><td>Availability &amp; retry semantics (at-least-once dedup)</td><td class="center"><strong>Must</strong></td></tr>
+              <tr><td><code>NFR-007</code></td><td>PII handling &amp; GDPR</td><td class="center"><strong>Must</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="data"><span class="h2-num">6</span> Data Specifications</h2>
+
+        <h3 id="data-token">6.1 OAuth token request</h3>
+<pre><code>POST /v2/oauth/token HTTP/1.1
+Host: api.am.wirelesscar.cloud
+Content-Type: application/x-www-form-urlencoded
+x-api-key: &lt;CarFix api key&gt;
+
+grant_type=client_credentials
+&amp;client_id=&lt;CarFix client id&gt;
+&amp;client_secret=&lt;CarFix client secret&gt;
+&amp;audience=WirelessCar/CCS Downlink Notification
+&amp;tenant=&lt;carfix tenant id&gt;
+&amp;scope=Read_RAM Write_RAM</code></pre>
+
+        <h3 id="data-envelope">6.2 xCall downlink notification envelope (illustrative)</h3>
+        <blockquote><em>Q-07 to Volvo — please share an authoritative payload sample.</em></blockquote>
+<pre><code>{
+  "subscriptionId": "sub_01HX…",
+  "messages": [
+    {
+      "receiptHandle": "abc123…",
+      "serviceId": "svc_01HX…",
+      "type": "bCall",
+      "tenant": "carfix",
+      "vehicle": { "vehicleId": "WBA…", "vin": "YV1…", "msisdn": "+46…" },
+      "position": { "lat": 57.7089, "lng": 11.9746, "accuracy": 12 },
+      "occupants": 2,
+      "vehicleState": { "ignition": "off", "doors": "locked", "fuelPct": 18 },
+      "timestamp": "2026-05-10T08:14:33Z"
+    }
+  ]
+}</code></pre>
+
+        <h3 id="data-ids">6.3 Vehicle identifier types</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th><code>vehicleIdType</code></th><th>Format</th><th>Source</th></tr></thead>
+            <tbody>
+              <tr><td><code>VEHICLE_IDENTIFIER</code></td><td>WirelessCar opaque ID</td><td>Returned by master-data search</td></tr>
+              <tr><td><code>VIN</code></td><td>17-char ISO-3779</td><td>Stamped on the vehicle, on the policy</td></tr>
+              <tr><td><code>MSISDN</code></td><td>E.164 phone number</td><td>Embedded SIM in the TCU</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="data-cmd">6.4 Remote-command status state machine (RAM)</h3>
+<pre><code>   POST .../RAM/commands
+        <span class="p">│</span>
+        <span class="arrow">▼</span>
+     Pending ──── <span class="n">Timeout</span> (no vehicle response in window)
+        <span class="p">│</span>
+        <span class="arrow">▼</span>
+    Success | Failure</code></pre>
+        <blockquote><strong>Pending</strong> is <em>always</em> the initial response. Poll <code>GET …/RAM/commands/{commandId}</code> until a terminal state. On <code>Timeout</code>, the actual vehicle-side outcome is indeterminate; do not retry blindly.</blockquote>
+
+        <h3 id="data-headers">6.5 Common header conventions</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Header</th><th>Purpose</th><th>Required by</th></tr></thead>
+            <tbody>
+              <tr><td><code>Authorization: Bearer &lt;jwt&gt;</code></td><td>M2M token</td><td>All CCS / DAM endpoints</td></tr>
+              <tr><td><code>x-api-key: &lt;key&gt;</code></td><td>Partner API key</td><td><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener" title="Open access-management-m2m-api docs"><code>access-management-m2m-api.yml</code></a> only</td></tr>
+              <tr><td><code>Tenant: &lt;tenantId&gt;</code></td><td>Tenant scoping</td><td>Notifications Manager, Tenant Config Admin</td></tr>
+              <tr><td><code>traceparent</code> / <code>tracestate</code></td><td>W3C tracing</td><td>All endpoints (recommended)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="topology"><span class="h2-num">7</span> Integration Topology, Channels &amp; Workflow Recipes (MVP)</h2>
+
+        <h3 id="region-matrix">7.1 Region matrix (MVP-scoped specs only)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>API spec</th><th class="center">EU</th><th class="center">NA</th><th class="center">CN</th><th class="center">NonProd</th></tr></thead>
+            <tbody>
+              <tr><td>Access Management M2M</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+              <tr><td>Fleet Authentication <em>(not for CarFix)</em></td><td class="center">✓</td><td class="center">—</td><td class="center">✓</td><td class="center">—</td></tr>
+              <tr><td>Master Data Adapter</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+              <tr><td>xCall Consumer</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+              <tr><td>xCall Downlink Notification</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+              <tr><td>Downlink Subscriptions</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+              <tr><td>Consumer Notifications</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+              <tr><td>Consumer Subscriptions</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+              <tr><td>Notifications Manager (WebSocket)</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+              <tr><td>Remote Service <em>(RAM only)</em></td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+              <tr><td>Tenant Configuration Admin</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">—</td></tr>
+              <tr><td>Privacy API</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td><td class="center">✓</td></tr>
+              <tr><td>Data Access Management</td><td class="center">✓</td><td class="center">—</td><td class="center">✓</td><td class="center">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="channels">7.2 Channel guidance</h3>
+<pre><code>Long-poll · MVP default :  GET /notifications/{subId}     → simpler · idempotent · ≤ 20 s
+WebSocket · post-MVP    :  wss://api.notifications.…      → sub-second push · long-lived conn</code></pre>
+
+        <h3 id="flows">7.3 End-to-end flow — Vehicle-initiated bCall (breakdown)</h3>
+<pre><code>[Vehicle] → bCall event
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[WirelessCar] enqueues to downlink topic
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] long-polls   <span class="k">GET /notifications/{subscriptionId}</span>    <span class="c">← FR-003</span>
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] receives    <span class="s">serviceId, location, occupants, vehicleState</span>
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] acks        <span class="k">PUT /notifications/{subscriptionId}/acknowledgement</span>
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] looks up    <span class="k">GET /vehicles/{vehicleId}?vehicleIdType=VIN</span>   <span class="c">← FR-005</span>
+[CarFix] (verbal)    <span class="n">agent confirms caller identity by phone</span>
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] (optional)  <span class="k">GET /fleets/{f}/vehicles/{v}/status</span>            <span class="c">← FR-007</span>
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] (optional)  <span class="k">POST /vehicles/{v}/services/RAM/commands</span>       <span class="c">← FR-011</span>
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] dispatches  internal TMS → tow operator
+            <span class="p">│</span>
+            <span class="arrow">▼</span>
+[CarFix] updates     <span class="k">PUT /services/{serviceId}/updated</span>              <span class="c">← FR-004</span>
+[CarFix] terminates  <span class="k">PUT /services/{serviceId}/terminated</span></code></pre>
+
+        <h3 id="workflows">7.4 Per-scenario API workflow recipes (MVP)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>WF</th><th>Scenario</th><th>API chain</th></tr></thead>
+            <tbody>
+              <tr><td><strong>WF-1</strong></td><td>Look up Volvo customer by name / phone / email <em>(FR-005)</em></td><td><code>POST /search/users</code> → <code>GET /users/{userId}</code> <em>(Master Data; user-relations call deferred post-MVP)</em></td></tr>
+              <tr><td><strong>WF-2</strong></td><td>Look up Volvo vehicle by VIN / plate / MSISDN <em>(FR-005)</em></td><td><code>GET /vehicles/{id}?vehicleIdType=VIN</code> (or <code>POST /search/vehicles</code>) <em>(Master Data; agent confirms identity verbally)</em></td></tr>
+              <tr><td><strong>WF-3</strong></td><td>Service entitlement check <em>(FR-005)</em></td><td><code>GET /vehicles/{id}/services</code> (Master Data) → cross-reference with CarFix–Volvo contract</td></tr>
+              <tr><td><strong>WF-4</strong></td><td>Vehicle location &amp; status <em>(FR-007)</em></td><td><code>GET /fleets/{f}/vehicles/{v}/position</code> (DAM) + <code>GET /fleets/{f}/vehicles/{v}/status</code> (DAM)</td></tr>
+              <tr><td><strong>WF-5</strong></td><td>Inbound bCall full happy path <em>(FR-002 – FR-005, FR-007)</em></td><td>xCall Downlink Notification (long-poll + ack) → xCall Consumer (<code>GET /services/{serviceId}</code>) → Master Data lookup + entitlement → DAM position + status → CarFix TMS dispatch → xCall Consumer lifecycle (updated → terminated)</td></tr>
+              <tr><td><strong>WF-7</strong></td><td>Trigger alarm (RAM) for SOS / locate-low-risk <em>(FR-011)</em></td><td>WF-2 + active <code>serviceId</code> from xCall → <code>POST /vehicles/{v}/services/RAM/commands</code> → poll <code>GET .../RAM/commands/{commandId}</code></td></tr>
+              <tr><td><strong>WF-9</strong></td><td>Tenant onboarding (one-time) <em>(FR-001, FR-002, FR-017)</em></td><td>M2M token (audience CCS Admin) → <code>POST /subscriptions</code> (Downlink Subscriptions) → <code>POST /configurations/consumer/notifications</code> (Tenant Config Admin). <em>Fleet creation is performed by Volvo / WirelessCar on CarFix's behalf — DAM Admin not exercised in MVP.</em></td></tr>
+              <tr><td><strong>WF-10</strong></td><td>Token issuance &amp; secret rotation <em>(FR-001, FR-019)</em></td><td><code>GET /oauth/.well-known/jwks.json</code> (cache) → <code>POST /v2/oauth/token</code> (cache until exp − 60 s) → on schedule: <code>POST /secret-rotation/client-secret-create</code> (90-day expiry) → ≥ 60 s overlap → <code>DELETE /secret-rotation/client-secret-delete</code></td></tr>
+              <tr><td><strong>WF-11</strong></td><td>GDPR data subject request <em>(FR-018)</em></td><td><code>GET /vehicles/{vehicleId}</code> (Privacy — fetch) <strong>or</strong> <code>POST /vehicles/{vehicleId}</code> (Privacy — purge) → poll <code>GET /receipts/{receiptId}</code> → download data zip when Ready</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <blockquote class="warn">
+          <strong>Workflows excluded from MVP</strong> <em>(see <a href="RSA-Integration-Analysis.html">parent study</a>)</em>: WF-6 RDL door unlock (FR-009), WF-8 EV out-of-charge (FR-013, FR-015). The parent-study WF-7 originally covered RHF honk-and-flash (FR-010); in this MVP doc WF-7 is repurposed for the RAM alarm command (FR-011). The parent-study WF-4 originally combined DAM with an RCS connectivity check; in MVP it covers DAM only (FR-014 RCS removed).
+        </blockquote>
+
+        <h4>API ↔ workflow cross-reference (MVP)</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>API spec</th><th>Used in MVP workflows</th></tr></thead>
+            <tbody>
+              <tr><td><a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener" title="Open access-management-m2m-api docs"><code>access-management-m2m-api.yml</code></a></td><td>WF-9, WF-10 (every other WF depends on a token from here)</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-master-data-adapter.html" target="_blank" rel="noopener" title="Open call-center-services-master-data-adapter docs"><code>call-center-services-master-data-adapter.yml</code></a></td><td>WF-1, WF-2, WF-3, WF-5, WF-7</td></tr>
+              <tr><td><a class="yml-link" href="data-access-management-api.html" target="_blank" rel="noopener" title="Open data-access-management-api docs"><code>data-access-management-api.yml</code></a></td><td>WF-4, WF-5</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-xcall-consumer.html" target="_blank" rel="noopener" title="Open call-center-services-xcall-consumer docs"><code>call-center-services-xcall-consumer.yml</code></a></td><td>WF-5, WF-7</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-xcall-downlink-notification-api.html" target="_blank" rel="noopener" title="Open call-center-services-xcall-downlink-notification-api docs"><code>call-center-services-xcall-downlink-notification-api.yml</code></a></td><td>WF-5</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-downlink-subscriptions-api.html" target="_blank" rel="noopener" title="Open call-center-services-downlink-subscriptions-api docs"><code>call-center-services-downlink-subscriptions-api.yml</code></a></td><td>WF-9</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-consumer-notifications.html" target="_blank" rel="noopener" title="Open call-center-services-consumer-notifications docs"><code>call-center-services-consumer-notifications.yml</code></a></td><td>(alt to WF-5 inbound channel)</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-consumer-subscriptions-api.html" target="_blank" rel="noopener" title="Open call-center-services-consumer-subscriptions-api docs"><code>call-center-services-consumer-subscriptions-api.yml</code></a></td><td>(paired with consumer-notifications)</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-notifications-manager.html" target="_blank" rel="noopener" title="Open call-center-services-notifications-manager docs"><code>call-center-services-notifications-manager.yml</code></a></td><td>(WebSocket alt to long-poll in WF-5)</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-remote-service.html" target="_blank" rel="noopener" title="Open call-center-services-remote-service docs"><code>call-center-services-remote-service.yml</code></a></td><td>WF-7 (RAM only — RDL/RHF/POI/RCS/RDC/RSI/REC are post-MVP)</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-tenant-configuration-admin.html" target="_blank" rel="noopener" title="Open call-center-services-tenant-configuration-admin docs"><code>call-center-services-tenant-configuration-admin.yml</code></a></td><td>WF-9</td></tr>
+              <tr><td><a class="yml-link" href="call-center-services-privacy-api.html" target="_blank" rel="noopener" title="Open call-center-services-privacy-api docs"><code>call-center-services-privacy-api.yml</code></a></td><td>WF-11</td></tr>
+              <tr><td><a class="yml-link" href="data-access-management-admin-api.html" target="_blank" rel="noopener" title="Open data-access-management-admin-api docs"><code>data-access-management-admin-api.yml</code></a></td><td><em>post-MVP — Volvo provisions our fleet during onboarding</em></td></tr>
+              <tr><td><a class="yml-link" href="ev-charging-log-service.html" target="_blank" rel="noopener" title="Open ev-charging-log-service docs"><code>ev-charging-log-service.yml</code></a></td><td><em>post-MVP — EV market scope deferred</em></td></tr>
+              <tr><td><a class="yml-link" href="fleet-authentication-api.html" target="_blank" rel="noopener" title="Open fleet-authentication-api docs"><code>fleet-authentication-api.yml</code></a></td><td><em>not used by CarFix — see FR-001 / Q-01</em></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="rules"><span class="h2-num">8</span> Validation &amp; Business Rules (MVP)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rule</th><th>Behaviour</th></tr></thead>
+            <tbody>
+              <tr><td>Bearer token freshness</td><td>Refresh before <code>exp − 60 s</code>; refuse to issue any call if no valid token can be obtained.</td></tr>
+              <tr><td>Audience match</td><td>The <code>audience</code> claim of the issued token MUST match the API family being called.</td></tr>
+              <tr><td>Per-action scope</td><td>The RAM command requires <code>Read_RAM</code> / <code>Write_RAM</code> scope; missing scope ⇒ 403.</td></tr>
+              <tr><td>At-least-once dedup</td><td>All inbound notifications deduplicated on <code>serviceId</code> + event sequence number.</td></tr>
+              <tr><td>Command status polling</td><td>Initial response is always <code>Pending</code>; only <code>Success</code> / <code>Failure</code> / <code>Timeout</code> are terminal. No blind retry on <code>Timeout</code>.</td></tr>
+              <tr><td>Identity gate (MVP)</td><td>API-level ownership verification is post-MVP. The agent verbally confirms caller identity, and a RAM command requires an active <code>serviceId</code> from a vehicle-initiated bCall (i.e. the driver is on the line).</td></tr>
+              <tr><td>Region pinning</td><td>A vehicle is served only from the WirelessCar region matching its registration; cross-region calls are not supported.</td></tr>
+              <tr><td>Tracing propagation</td><td><code>traceparent</code> is a hard requirement on all outbound calls.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="errors"><span class="h2-num">9</span> Error Handling</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Class</th><th>Behaviour</th></tr></thead>
+            <tbody>
+              <tr><td><strong>401 / 403 — auth / scope</strong></td><td>Refresh token; if still 401, alert ops. 403 = scope misconfig — not retryable.</td></tr>
+              <tr><td><strong>404 on <code>vehicleId</code> / <code>serviceId</code></strong></td><td>Surface to agent as "vehicle / case not found"; do not retry.</td></tr>
+              <tr><td><strong>409 / state conflict on xCall lifecycle</strong></td><td>Re-fetch <code>GET /services/{serviceId}</code> and reconcile UI state.</td></tr>
+              <tr><td><strong>RAM command <code>Timeout</code></strong></td><td>Outcome unknown — do <strong>not</strong> auto-retry. Escalate to agent for manual confirmation.</td></tr>
+              <tr><td><strong>Notification ack deadline missed</strong></td><td>Message will be redelivered; dedup logic in NFR-006 must prevent double-processing.</td></tr>
+              <tr><td><strong>WebSocket drop (FR-008)</strong></td><td>Reconnect with exponential backoff (jitter); fall back to long-poll after N consecutive failures.</td></tr>
+              <tr><td><strong>JWKS fetch failure</strong></td><td>Serve from cache up to TTL; if expired, fail-closed on inbound JWT verification.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="ac"><span class="h2-num">10</span> Acceptance Criteria (MVP)</h2>
+        <p>
+          AC-IDs preserved from the parent study for traceability — gaps
+          (AC-005, AC-006, AC-007) indicate criteria deferred post-MVP because
+          they target the dropped FR-006 / FR-009 surface.
+        </p>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-001</span> <strong>M2M token issuance</strong> <em>(FR-001)</em></div>
+          <span class="gwt"><b>Given</b> a registered CarFix tenant with valid <code>client_id</code> / <code>client_secret</code></span>
+          <span class="gwt"><b>When</b> the CarFix backend POSTs to <code>/v2/oauth/token</code> with audience <code>WirelessCar/CCS Downlink Notification</code></span>
+          <span class="gwt"><b>Then</b> a JWT is returned, validates against the regional JWKS, and carries the requested audience and scope claims.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-002</span> <strong>Inbound bCall reception</strong> <em>(FR-003)</em></div>
+          <span class="gwt"><b>Given</b> an active downlink subscription for the CarFix tenant</span>
+          <span class="gwt"><b>When</b> the test vehicle emits a bCall</span>
+          <span class="gwt"><b>Then</b> the long-poll receives the message within ≤ 20 s, with <code>serviceId</code>, vehicle identifiers, position, and occupant count.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-003</span> <strong>At-least-once dedup</strong> <em>(NFR-006)</em></div>
+          <span class="gwt"><b>Given</b> a notification fetched but not acknowledged</span>
+          <span class="gwt"><b>When</b> the visibility window expires and WirelessCar redelivers it</span>
+          <span class="gwt"><b>Then</b> CarFix detects the duplicate via <code>serviceId</code> and creates no second case.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-004</span> <strong>Vehicle lookup by VIN</strong> <em>(FR-005)</em></div>
+          <span class="gwt"><b>Given</b> the agent has a 17-character VIN</span>
+          <span class="gwt"><b>When</b> the agent submits the lookup</span>
+          <span class="gwt"><b>Then</b> <code>GET /vehicles/{id}?vehicleIdType=VIN</code> returns the canonical vehicle record within ≤ 1 s p95.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-008</span> <strong>xCall lifecycle update</strong> <em>(FR-004)</em></div>
+          <span class="gwt"><b>Given</b> an active <code>serviceId</code></span>
+          <span class="gwt"><b>When</b> the agent posts an update via <code>PUT /services/{serviceId}/updated</code></span>
+          <span class="gwt"><b>Then</b> a subsequent <code>GET /services/{serviceId}</code> reflects the new state.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-009</span> <strong>Trace propagation</strong> <em>(NFR-003)</em></div>
+          <span class="gwt"><b>Given</b> an inbound notification carrying a <code>traceparent</code></span>
+          <span class="gwt"><b>When</b> CarFix makes any downstream WirelessCar call for the same case</span>
+          <span class="gwt"><b>Then</b> the same trace ID appears in CarFix's call logs and on WirelessCar's side.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-010</span> <strong>Region isolation</strong> <em>(NFR-002)</em></div>
+          <span class="gwt"><b>Given</b> a vehicle registered in EU</span>
+          <span class="gwt"><b>When</b> CarFix accidentally calls the CN base URL with the EU token</span>
+          <span class="gwt"><b>Then</b> WirelessCar rejects the call (401 / 403); CarFix's routing layer must prevent this in production.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-011</span> <strong>Secret rotation overlap</strong> <em>(FR-019)</em></div>
+          <span class="gwt"><b>Given</b> a scheduled rotation</span>
+          <span class="gwt"><b>When</b> CarFix creates a new secret then continues to issue tokens for ≥ 60 s before deleting the old secret</span>
+          <span class="gwt"><b>Then</b> no in-flight integration call fails during the rotation window.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-012</span> <strong>RAM alarm happy path</strong> <em>(FR-011) — new for MVP</em></div>
+          <span class="gwt"><b>Given</b> an active <code>serviceId</code> from a vehicle-initiated bCall</span>
+          <span class="gwt"><b>When</b> the agent triggers the RAM alarm</span>
+          <span class="gwt"><b>Then</b> the command transitions Pending → Success within the WirelessCar SLA, and the agent is notified.</span>
+        </div>
+
+        <div class="ac-block">
+          <div><span class="ac-id">AC-013</span> <strong>RAM alarm timeout</strong> <em>(FR-011 / NFR-006) — new for MVP</em></div>
+          <span class="gwt"><b>Given</b> a vehicle with poor connectivity</span>
+          <span class="gwt"><b>When</b> the RAM command transitions to <code>Timeout</code></span>
+          <span class="gwt"><b>Then</b> CarFix does <strong>not</strong> auto-retry; agent is prompted to re-attempt manually; case event log records the timeout.</span>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="schedule"><span class="h2-num">11</span> CarFix Integration Roadmap (MVP)</h2>
+        <p>
+          A proposed phasing for the CarFix–Volvo MVP integration, anchored
+          to a target <strong>joint SIT entry with Volvo / WirelessCar on
+          2026-07-06</strong> (eight weeks from this study baseline of
+          <strong>2026-05-10</strong>). Phases 1 – 5 are the critical path
+          to that gate. <em>Dates are CarFix's proposal — to be confirmed
+          with Volvo (Q-12 in §13).</em>
+        </p>
+
+        <h3 id="schedule-phases">11.1 Phase summary</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th class="center">#</th><th>Phase</th><th>Window</th><th>Owner</th><th>Exit gate</th></tr></thead>
+            <tbody>
+              <tr><td class="center">1</td><td><strong>Joint study review with Volvo + onboarding kickoff</strong></td><td>2026-05-11 → 2026-05-17 (Wk 1)</td><td>CarFix BA · Volvo Technical Team · WirelessCar onboarding</td><td>This document reviewed; §13 questions answered; CarFix tenant + initial scopes provisioned.</td></tr>
+              <tr><td class="center">2</td><td><strong>Auth, secrets, region routing</strong> (FR-001, FR-019, NFR-001/002)</td><td>2026-05-18 → 2026-05-24 (Wk 2)</td><td>CarFix Engineering</td><td>Tokens issued in EU sandbox; rotation test green.</td></tr>
+              <tr><td class="center">3</td><td><strong>Inbound channel</strong> (FR-002, FR-003, NFR-003/004/006)</td><td>2026-05-25 → 2026-06-07 (Wk 3 – 4)</td><td>CarFix Engineering · WirelessCar test ops</td><td>bCall fixture received &amp; acknowledged end-to-end.</td></tr>
+              <tr><td class="center">4</td><td><strong>Identification, lifecycle, status</strong> (FR-004, FR-005, FR-007, FR-008)</td><td>2026-06-08 → 2026-06-21 (Wk 5 – 6)</td><td>CarFix Engineering</td><td>Agent desktop can identify vehicle, read live status, update xCall lifecycle.</td></tr>
+              <tr><td class="center">5</td><td><strong>RAM alarm + tenant config</strong> (FR-011, FR-017)</td><td>2026-06-22 → 2026-07-05 (Wk 7 – 8)</td><td>CarFix Engineering</td><td><code>Read_RAM</code> / <code>Write_RAM</code> scopes provisioned; alarm test green; tenant notification config applied.</td></tr>
+              <tr><td class="center"><strong>6</strong></td><td><strong>Joint SIT — System Integration Testing</strong></td><td><strong>2026-07-06 → 2026-07-19 (Wk 9 – 10)</strong></td><td>CarFix QA · WirelessCar partner test</td><td>All AC-001 … AC-013 (MVP set) pass on the WirelessCar SIT environment.</td></tr>
+              <tr><td class="center">7</td><td><strong>UAT — Business acceptance</strong></td><td>2026-07-20 → 2026-07-26 (Wk 11)</td><td>CarFix Business · Volvo OEM</td><td>Sign-off from CarFix Ops director and Volvo OEM contact.</td></tr>
+              <tr><td class="center">8</td><td><strong>Pre-prod hardening</strong></td><td>2026-07-27 → 2026-08-02 (Wk 12)</td><td>CarFix Engineering</td><td>Production secrets in vault; observability dashboards live.</td></tr>
+              <tr><td class="center">9</td><td><strong>Go-live &amp; hypercare (EU)</strong></td><td>2026-08-03 → 2026-08-09 (Wk 13)</td><td>CarFix Engineering · Ops</td><td>EU production cut-over; daily standup for 5 working days.</td></tr>
+              <tr><td class="center">10</td><td><strong>Post-MVP backlog</strong> (FR-006 ownership gate, FR-009 RDL, FR-010 RHF, FR-012 RSI/REC, FR-013 POI, FR-014 RCS/RDC, FR-015 EV history, FR-016 fleet provisioning, FR-018 Privacy go-live)</td><td>Backlog</td><td>TBD</td><td>Activated per CarFix business demand and Volvo authorisation.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="schedule-timeline">11.2 Visual timeline</h3>
+<pre><code>Wk 1   ┐ Joint study review · onboarding kickoff
+Wk 2   ┤ Auth · secrets · region
+Wk 3-4 ┤ Inbound channel (FR-002/003)
+Wk 5-6 ┤ Identification + lifecycle + status (FR-004/005/007/008)
+Wk 7-8 ┤ RAM alarm + tenant config (FR-011, FR-017)
+       <span class="arrow">▼</span>
+Wk 9-10  <span class="n">▶ Joint SIT entry — 2026-07-06</span>
+Wk 11    ▶ UAT
+Wk 12    ▶ Hardening
+Wk 13    ▶ Go-live + hypercare (EU)
+       ─────────────────────────────
+        <span class="c">Post-MVP backlog: ownership gate · RDL · RHF · RSI/REC · POI · RCS/RDC · EV · fleet provisioning · Privacy</span></code></pre>
+
+        <h3 id="schedule-milestones">11.3 Key milestones</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Milestone</th><th>Target date</th><th>Gate condition</th></tr></thead>
+            <tbody>
+              <tr><td><strong>M1</strong> · Study reviewed &amp; sign-off</td><td>2026-05-17</td><td>CarFix Product, Engineering, and Volvo Technical Team acknowledge §13 answers in writing.</td></tr>
+              <tr><td><strong>M2</strong> · Inbound channel green</td><td>2026-06-07</td><td>bCall fixture received &amp; acknowledged end-to-end on EU sandbox.</td></tr>
+              <tr><td><strong>M3</strong> · MVP code-complete</td><td>2026-07-05</td><td>All MVP FRs merged; build clean.</td></tr>
+              <tr><td><strong>M4</strong> · SIT entry</td><td><strong>2026-07-06</strong></td><td>All Phase 5 exit conditions met.</td></tr>
+              <tr><td><strong>M5</strong> · UAT entry</td><td>2026-07-20</td><td>SIT exit criteria met.</td></tr>
+              <tr><td><strong>M6</strong> · Go-live (EU)</td><td>2026-08-03</td><td>UAT signed off; rollback plan documented.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="schedule-assumptions">11.4 Assumptions &amp; dependencies</h3>
+        <ul>
+          <li>Volvo / WirelessCar provisions the CarFix tenant, fleet, and base scopes (<code>Read_RAM</code>, <code>Write_RAM</code> plus inbound CCS scopes) by end of Wk 1. <em>Fleet creation is performed by Volvo on CarFix's behalf — we do not exercise DAM Admin in MVP.</em></li>
+          <li>A test vehicle or vehicle simulator is available throughout Wk 3 – 6 (Q-11).</li>
+          <li>CarFix backend already has a secret manager, observability stack, and regional infrastructure; this engagement does not stand them up.</li>
+          <li>NA market is <strong>out of scope</strong> for the v1.0 launch pending DAM availability confirmation (Q-10).</li>
+          <li>The post-MVP backlog (door unlock, ownership gate, EV, etc.) is scheduled separately; this MVP plan does not depend on liability sign-off for elevated scopes (<code>Write_RDL</code>, <code>Write_RSI</code>, <code>Write_REC</code>).</li>
+        </ul>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="glossary"><span class="h2-num">12</span> Glossary</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Term</th><th>Context</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Audience claim</strong></td><td>The <code>audience</code> value passed at token-issuance time and present in the issued JWT; WirelessCar uses it to gate which API family the token may call.</td></tr>
+              <tr><td><strong>Tenant</strong></td><td>CarFix's logical identity within WirelessCar. Every call carries an implicit or explicit tenant scoping.</td></tr>
+              <tr><td><strong>Long-poll</strong></td><td>The HTTP pattern used by xCall Downlink Notification and Consumer Notifications: a <code>GET</code> returns up to 10 messages or waits ~20 s before returning empty.</td></tr>
+              <tr><td><strong>Acknowledgement</strong></td><td>The <code>PUT …/acknowledgement</code> call that prevents WirelessCar from redelivering an already-handled message.</td></tr>
+              <tr><td><strong>Service / <code>serviceId</code></strong></td><td>A single CarFix case, originated by a vehicle bCall / iCall or by an agent-initiated <code>POST /services/started</code>.</td></tr>
+              <tr><td><strong>Command / <code>commandId</code></strong></td><td>A RAM-family request issued by CarFix against a vehicle; status is polled until terminal.</td></tr>
+              <tr><td><strong>Elevated scope</strong></td><td>Permissions (e.g. <code>Write_RDL</code>, <code>Write_RSI</code>, <code>Write_REC</code>) granted by WirelessCar only after partner liability sign-off — <strong>not in MVP</strong>. MVP uses only <code>Read_RAM</code> / <code>Write_RAM</code>.</td></tr>
+              <tr><td><strong>MoSCoW</strong></td><td>Prioritisation scheme: <em>Must</em>, <em>Should</em>, <em>Could</em> (this study does not use the <em>Won't</em> tier).</td></tr>
+              <tr><td><strong>At-least-once</strong></td><td>Delivery semantics for WirelessCar notifications: every event is delivered ≥ 1 time; the consumer is responsible for dedup.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ────────────────────────────────────────────────────── -->
+        <h2 id="questions"><span class="h2-num">13</span> Open Questions for the Volvo Technical Team (MVP)</h2>
+        <p>
+          These items need Volvo / WirelessCar confirmation during the joint
+          review session. Each is tied back to the FR / NFR it originated in.
+          Resolution of these is the exit criterion for Phase 1 (M1, §11.3).
+          Q-IDs are preserved from the parent study for traceability; gaps
+          (Q-08, Q-09) indicate questions deferred along with their
+          MVP-excluded FRs.
+        </p>
+
+        <h3>13.1 Authentication, identity &amp; onboarding</h3>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-01</span> <strong>Confirm CarFix uses Access Management M2M, not Fleet Authentication.</strong> <em>(FR-001, §1.2)</em></div>
+          <span class="gwt"><b>Why we ask:</b> <a class="yml-link" href="fleet-authentication-api.html" target="_blank" rel="noopener" title="Open fleet-authentication-api docs"><code>fleet-authentication-api.yml</code></a> is marked <code>x-audience: COMPANY_INTERNAL</code>. We assume CarFix issues tokens via <a class="yml-link" href="access-management-m2m-api.html" target="_blank" rel="noopener" title="Open access-management-m2m-api docs"><code>access-management-m2m-api.yml</code></a> (audience <code>EXTERNAL_PARTNER</code>). Please confirm and provide the regional token-endpoint URL for our sandbox.</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-02</span> <strong>Audience &amp; scope catalogue for MVP.</strong> <em>(FR-001, FR-011)</em></div>
+          <span class="gwt"><b>Why we ask:</b> The specs reference audiences such as <code>WirelessCar/CCS Consumer</code>, <code>… Downlink Notification</code>, <code>… Privacy</code>, plus per-action scopes such as <code>Read_RAM</code> / <code>Write_RAM</code>. Please supply the exact list CarFix will be granted at MVP launch.</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-03</span> <strong>Tenant provisioning timeline.</strong> <em>(§11)</em></div>
+          <span class="gwt"><b>Why we ask:</b> CarFix needs the EU sandbox tenant (with our fleet pre-attached) ready by Wk 1 and production-equivalent SIT tenant by Wk 9 (2026-07-06). Can Volvo / WirelessCar commit to these dates, identify the contact who provisions tenants, and confirm Volvo will attach our authorised vehicles to the fleet on our behalf (we do not exercise DAM Admin in MVP)?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-04</span> <strong>Secret-rotation operational guidance.</strong> <em>(FR-019)</em></div>
+          <span class="gwt"><b>Why we ask:</b> What is Volvo's recommended rotation cadence (we propose 90 days) and the maximum overlap window <code>secret-rotation/client-secret-create</code> tolerates before old-secret deletion is mandatory?</span>
+        </div>
+
+        <h3>13.2 Inbound channel &amp; notifications</h3>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-05</span> <strong>Channel recommendation: long-poll vs WebSocket.</strong> <em>(FR-008, NFR-004)</em></div>
+          <span class="gwt"><b>Why we ask:</b> CarFix's MVP plan favours long-poll for simplicity. Does Volvo recommend the WebSocket Notifications Manager from day 1, or is long-poll acceptable for production?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-06</span> <strong>SQS subscription mechanics.</strong> <em>(FR-002)</em></div>
+          <span class="gwt"><b>Why we ask:</b> The downlink subscription appears to use SQS push (<code>POST /subscriptions/{subId}/confirmation</code>). Does CarFix host the SQS queue in our AWS account, or does WirelessCar host and we receive via a different transport? If the former, what IAM trust policy do we need?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-07</span> <strong>Notification payload schema for bCall &amp; iCall.</strong> <em>(FR-003, §6.2)</em></div>
+          <span class="gwt"><b>Why we ask:</b> The §6.2 envelope is illustrative (assembled from spec excerpts). Please share an authoritative sample bCall and iCall payload — including occupant / crash / vehicle-state fields — so CarFix can validate field mappings to our agent UI.</span>
+        </div>
+
+        <h3>13.3 Vehicle data &amp; RAM alarm</h3>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-10</span> <strong>DAM availability in NA region.</strong> <em>(§2.3, FR-007)</em></div>
+          <span class="gwt"><b>Why we ask:</b> The DAM specs only list EU + CN servers. If CarFix needs to support NA-registered vehicles, what is the path? Does Volvo plan a NA DAM endpoint, or is fallback via the Master Data Adapter expected?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-11</span> <strong>Test vehicle / simulator availability.</strong> <em>(§11)</em></div>
+          <span class="gwt"><b>Why we ask:</b> CarFix needs to fire reproducible bCall / iCall events and exercise the RAM alarm during Wk 3 – 8. Will Volvo provide a physical test vehicle in EU, an event simulator, or both? What is the lead time?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-16</span> <strong>RAM authorisation procedure.</strong> <em>(FR-011, new for MVP)</em></div>
+          <span class="gwt"><b>Why we ask:</b> What is the procedure for WirelessCar to enable <code>Read_RAM</code> / <code>Write_RAM</code> on the CarFix tenant for MVP launch, and is any liability sign-off required for the alarm-only command set (we assume no, given alarm is non-mobility-impacting)?</span>
+        </div>
+
+        <h3>13.4 SLAs, governance, operations</h3>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-12</span> <strong>SIT date confirmation.</strong> <em>(§11)</em></div>
+          <span class="gwt"><b>Why we ask:</b> Can Volvo / WirelessCar commit to joint SIT entry on <strong>2026-07-06</strong>, or does an alternate date better suit the partner test schedule?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-13</span> <strong>Production SLAs.</strong> <em>(NFR-006)</em></div>
+          <span class="gwt"><b>Why we ask:</b> What are Volvo / WirelessCar's published SLAs for: (a) downlink notification delivery latency, (b) RAM command end-to-end (POST → terminal status), (c) Master Data lookup latency, (d) overall API uptime per region? CarFix needs these to size our agent-side timeouts.</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-14</span> <strong>Privacy / GDPR data-flow ownership.</strong> <em>(FR-018, NFR-007)</em></div>
+          <span class="gwt"><b>Why we ask:</b> CarFix proposes to retain vehicle-personal data only for the active case window plus 90 days. Does Volvo as data controller accept this default, and is the Privacy API the formal channel for Volvo-originated DSR fulfilment requests we receive?</span>
+        </div>
+        <div class="ac-block" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+          <div><span class="ac-id" style="color:#92400e;background:none;">Q-15</span> <strong>Incident &amp; escalation routing.</strong> <em>(operations)</em></div>
+          <span class="gwt"><b>Why we ask:</b> Who is CarFix's first-line technical contact at Volvo / WirelessCar for production incidents? What is the on-call channel and target response time for Severity 1?</span>
+        </div>
+
+        <blockquote class="warn">
+          <strong>Questions deferred with their MVP-excluded FRs</strong> <em>(see <a href="RSA-Integration-Analysis.html">parent study</a>)</em>: Q-08 (Remote Service families RDL / RSI / REC / RHF / POI / RCS / RDC liability sign-off — FR-009, FR-010, FR-012, FR-013, FR-014) and Q-09 (ownership-gate authoritative source — FR-006).
+        </blockquote>
+
+        <p style="margin-top: 48px; font-size: 12px; color: var(--g500); text-align: center;">
+          <em>End of document · CarFix · Volvo API Integration Study — MVP · v1.0</em>
+        </p>
+      </main>
+    </div>
+    <script>
+      (function () {
+        var bar = document.querySelector('.tier-filter');
+        var table = document.getElementById('inventory-table');
+        if (!bar || !table) return;
+        bar.addEventListener('click', function (ev) {
+          var btn = ev.target.closest('.tier-pill');
+          if (!btn) return;
+          var filter = btn.dataset.filter;
+          bar.querySelectorAll('.tier-pill').forEach(function (b) {
+            b.classList.toggle('active', b === btn);
+          });
+          table.querySelectorAll('tbody tr').forEach(function (tr) {
+            var tier = tr.dataset.tier || '';
+            tr.classList.toggle('tier-hidden', filter !== 'all' && tier !== filter);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

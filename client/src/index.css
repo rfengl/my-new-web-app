@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+@theme {
+  /* TPA brand primary (red) — anchored to --red: #c8202f */
+  --color-primary-50:  #fdeeef;
+  --color-primary-100: #fbd5d7;
+  --color-primary-200: #f7abaf;
+  --color-primary-300: #f28089;
+  --color-primary-400: #eb5562;
+  --color-primary-500: #c8202f;   /* TPA --red */
+  --color-primary-600: #b31b28;
+  --color-primary-700: #9f1623;   /* TPA --red-dark  (hover / pressed) */
+  --color-primary-800: #7a1019;
+  --color-primary-900: #550b11;
+
+  /* TPA chrome */
+  --color-navy:   #1f2a37;        /* topbar background */
+  --color-navy-2: #2a3645;        /* topbar hover elements */
+
+  /* Fonts */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code, pre, .mono {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  }
+}

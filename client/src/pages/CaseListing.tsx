@@ -4,8 +4,8 @@ import { useMembershipsStore } from '../store/membershipsStore'
 import { formatDate } from '../utils/date'
 
 const STATUS_STYLES: Record<string, string> = {
-  Inforce: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-  Expired: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
+  Inforce: 'bg-[#d1fae5] text-[#065f46]',
+  Expired: 'bg-slate-100 text-slate-500',
 }
 
 export default function CaseListing() {
@@ -47,20 +47,23 @@ export default function CaseListing() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
+      <header className="bg-navy shadow-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary-500 rounded-md flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span className="font-semibold text-slate-800">Case Portal</span>
+            <div>
+              <span className="font-semibold text-white tracking-wide leading-none">Case Portal</span>
+              <p className="text-[11px] text-white/50 leading-none mt-0.5 tracking-wide uppercase">TPA Platform · Malaysia</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
             <button onClick={() => navigate('/api-docs')}
-              className="text-sm text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1.5">
+              className="text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-md px-3 py-1.5 transition-colors flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -68,15 +71,16 @@ export default function CaseListing() {
               API Docs
             </button>
             <button onClick={() => navigate('/guide')}
-              className="text-sm text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1.5">
+              className="text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-md px-3 py-1.5 transition-colors flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Help
             </button>
+            <div className="w-px h-5 bg-white/20 mx-2" />
             <button onClick={handleLogout}
-              className="text-sm text-slate-500 hover:text-slate-800 transition-colors">
+              className="text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-md px-3 py-1.5 transition-colors">
               Log out
             </button>
           </div>
@@ -92,8 +96,8 @@ export default function CaseListing() {
           </div>
           <button
             onClick={() => navigate('/cases/new')}
-            className="flex items-center gap-2 bg-slate-800 text-white text-sm font-medium
-                       px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-2 bg-primary-700 text-white text-sm font-medium
+                       px-4 py-2.5 rounded-lg hover:bg-primary-800 transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -146,7 +150,7 @@ export default function CaseListing() {
                   <td className="px-5 py-3.5 font-mono text-slate-500 text-xs">{m.nric || '—'}</td>
                   <td className="px-5 py-3.5 text-slate-500 text-xs">{formatDate(m.policyEffDate)}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[m.status] ?? 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${STATUS_STYLES[m.status] ?? 'bg-slate-100 text-slate-500'}`}>
                       {m.status}
                     </span>
                   </td>

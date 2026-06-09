@@ -16,4 +16,5 @@ export type Membership = {
   policyLapseDate: string
   status: 'Inforce' | 'Expired'
   underwritingExclusion: string
+  submissionId?: string
 }

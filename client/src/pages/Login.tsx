@@ -32,7 +32,7 @@ export default function Login() {
 
   const inputClass =
     'w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm ' +
-    'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ' +
+    'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ' +
     'placeholder:text-slate-400'
 
   return (
@@ -40,7 +40,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-800 rounded-xl mb-3">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-700 rounded-xl mb-3">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -95,8 +95,8 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium
-                         hover:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-primary-700 text-white rounded-lg py-2.5 text-sm font-medium
+                         hover:bg-primary-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>

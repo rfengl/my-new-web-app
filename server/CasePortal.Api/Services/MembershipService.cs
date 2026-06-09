@@ -93,4 +93,13 @@ public class MembershipService : IMembershipService
             return true;
         }
     }
+
+    public void SetSubmissionId(string membershipId, string submissionId)
+    {
+        lock (_lock)
+        {
+            var m = _memberships.FirstOrDefault(x => x.Id == membershipId);
+            if (m is not null) m.SubmissionId = submissionId;
+        }
+    }
 }

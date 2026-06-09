@@ -17,12 +17,12 @@ type Tab = 'verification' | 'submission'
 
 const inputClass =
   'w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm ' +
-  'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ' +
+  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ' +
   'placeholder:text-slate-400'
 
 const selectClass =
   'w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm ' +
-  'focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent'
+  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent'
 
 export default function CaseForm() {
   const { id } = useParams()
@@ -35,20 +35,21 @@ export default function CaseForm() {
   const [store]     = useState(() => createMembershipFormStore())
   const [subStore]  = useState(() => createSubmissionFormStore())
   const [activeTab, setActiveTab] = useState<Tab>('verification')
-  const [submissions, setSubmissions] = useState<SubmissionGL[]>([])
 
   const saving          = useStore(store, (s) => s.saving)
   const saveError       = useStore(store, (s) => s.saveError)
-  const subSaving       = useStore(subStore, (s) => s.saving)
-  const subSaveError    = useStore(subStore, (s) => s.saveError)
-  const subSubmissionId = useStore(subStore, (s) => s.submissionId)
-  const loadingCase     = useStore(store, (s) => s.loadingCase)
+  const subSaving    = useStore(subStore, (s) => s.saving)
+  const subSaveError = useStore(subStore, (s) => s.saveError)
+  const loadingCase  = useStore(store, (s) => s.loadingCase)
   const notFound        = useStore(store, (s) => s.notFound)
 
-  const loadSubmissions = () =>
-    api.get<SubmissionGL[]>(`/api/memberships/${id}/submissions`)
-       .then(setSubmissions)
+  const loadSubmission = (): Promise<void> => {
+    const { submissionId } = subStore.getState()
+    if (!submissionId) return Promise.resolve()
+    return api.get<SubmissionGL>(`/api/submissions/${submissionId}`)
+       .then((s) => subStore.getState().populate(s))
        .catch(() => {})
+  }
 
   useEffect(() => {
     if (!isEdit) {
@@ -59,10 +60,15 @@ export default function CaseForm() {
     store.setState({ loadingCase: true, notFound: false })
     api
       .get<Membership>(`/api/memberships/${id}`)
-      .then((m) => store.getState().populate(m))
+      .then((m) => {
+        store.getState().populate(m)
+        if (m.submissionId) {
+          subStore.setState({ submissionId: m.submissionId })
+          loadSubmission()
+        }
+      })
       .catch(() => store.setState({ notFound: true }))
       .finally(() => store.setState({ loadingCase: false }))
-    loadSubmissions()
   }, [id])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -71,8 +77,7 @@ export default function CaseForm() {
       subStore.setState({ saveError: '', saving: true })
       try {
         await subStore.getState().save(id!)
-        await loadSubmissions()
-        subStore.getState().reset()
+        await loadSubmission()
       } catch (err: any) {
         subStore.setState({ saveError: err?.message ?? 'Failed to save. Please try again.' })
       } finally {
@@ -126,7 +131,7 @@ export default function CaseForm() {
   const tabClass = (tab: Tab) =>
     `px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ` +
     (activeTab === tab
-      ? 'border-slate-800 text-slate-800'
+      ? 'border-primary-700 text-primary-700'
       : 'border-transparent text-slate-500 hover:text-slate-700')
 
   return (
@@ -136,7 +141,7 @@ export default function CaseForm() {
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
           <button
             onClick={() => navigate('/cases')}
-            className="text-slate-400 hover:text-slate-700 transition-colors"
+            className="text-slate-400 hover:text-primary-700 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -246,7 +251,7 @@ export default function CaseForm() {
                       <ZustandInput store={store} field="rbEntitlement" type="number" min={0} step="0.01"
                         placeholder="0.00"
                         className="w-full border border-slate-300 rounded-lg pl-10 pr-3 py-2.5 text-sm
-                                   focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                                    placeholder:text-slate-400" />
                     </div>
                   </div>
@@ -259,7 +264,7 @@ export default function CaseForm() {
                       <ZustandInput store={store} field="deductible" type="number" min={0} step="0.01"
                         placeholder="0.00"
                         className="w-full border border-slate-300 rounded-lg pl-10 pr-3 py-2.5 text-sm
-                                   focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                                    placeholder:text-slate-400" />
                     </div>
                   </div>
@@ -274,7 +279,7 @@ export default function CaseForm() {
                       <ZustandInput store={store} field="coPayment" type="number" min={0} max={100} step="0.01"
                         placeholder="0"
                         className="w-full border border-slate-300 rounded-lg px-3 pr-8 py-2.5 text-sm
-                                   focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
+                                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                                    placeholder:text-slate-400" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
                     </div>
@@ -330,7 +335,7 @@ export default function CaseForm() {
                   <ZustandTextarea store={store} field="underwritingExclusion" rows={4}
                     placeholder="List any exclusions…"
                     className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent
+                               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                                placeholder:text-slate-400 resize-y" />
                 </div>
               </fieldset>
@@ -349,8 +354,8 @@ export default function CaseForm() {
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium
-                             hover:bg-slate-700 disabled:opacity-60 transition-colors">
+                  className="flex-1 bg-primary-700 text-white rounded-lg py-2.5 text-sm font-medium
+                             hover:bg-primary-800 disabled:opacity-60 transition-colors">
                   {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Case'}
                 </button>
               </div>
@@ -360,55 +365,9 @@ export default function CaseForm() {
           {/* ── Submission / GL Request tab ── */}
           {activeTab === 'submission' && (
             <>
-              {/* Existing submissions list */}
-              {submissions.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-slate-700">GL Requests</p>
-                    <button type="button" onClick={() => subStore.getState().reset()}
-                      className="text-xs text-slate-500 hover:text-slate-800 underline underline-offset-2">
-                      + New
-                    </button>
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">ID</th>
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Request Type</th>
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">MRN</th>
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">GL Type</th>
-                        <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Created</th>
-                        <th className="px-4 py-2.5" />
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {submissions.map((s) => (
-                        <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-2.5 font-mono text-slate-500 text-xs">{s.id}</td>
-                          <td className="px-4 py-2.5 text-slate-700">{s.requestType || '—'}</td>
-                          <td className="px-4 py-2.5 text-slate-500 text-xs">{s.submissionStatus || '—'}</td>
-                          <td className="px-4 py-2.5 font-mono text-slate-500 text-xs">{s.mrn || '—'}</td>
-                          <td className="px-4 py-2.5 text-slate-500 text-xs">{s.glType || '—'}</td>
-                          <td className="px-4 py-2.5 text-slate-400 text-xs">{s.createdDate || '—'}</td>
-                          <td className="px-4 py-2.5 text-right">
-                            <button type="button" onClick={() => subStore.getState().populate(s)}
-                              className="text-xs font-medium text-slate-600 border border-slate-300
-                                         rounded-md px-2.5 py-1 hover:bg-slate-100 transition-colors">
-                              Edit
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Create / edit form */}
               <fieldset className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
                 <legend className="text-sm font-semibold text-slate-700 px-1 -mt-3 mb-2">
-                  {subSubmissionId ? 'Edit GL Request' : 'New GL Request'}
+                  GL Request
                 </legend>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -463,9 +422,9 @@ export default function CaseForm() {
                   Cancel
                 </button>
                 <button type="submit" disabled={subSaving}
-                  className="flex-1 bg-slate-800 text-white rounded-lg py-2.5 text-sm font-medium
-                             hover:bg-slate-700 disabled:opacity-60 transition-colors">
-                  {subSaving ? 'Saving…' : subSubmissionId ? 'Update GL Request' : 'Add GL Request'}
+                  className="flex-1 bg-primary-700 text-white rounded-lg py-2.5 text-sm font-medium
+                             hover:bg-primary-800 disabled:opacity-60 transition-colors">
+                  {subSaving ? 'Saving…' : 'Save GL Request'}
                 </button>
               </div>
             </>

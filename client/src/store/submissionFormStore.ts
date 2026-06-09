@@ -43,14 +43,11 @@ export function createSubmissionFormStore() {
       const { submissionId, submissionStatus, requestType, glType, mrn } = get()
       const payload = { submissionStatus, requestType, glType, mrn }
       if (submissionId) {
-        return api.put<SubmissionGL>(
-          `/api/memberships/${membershipId}/submissions/${submissionId}`,
-          payload,
-        )
+        return api.put<SubmissionGL>(`/api/submissions/${submissionId}`, payload)
       }
       const created = await api.post<SubmissionGL>(
-        `/api/memberships/${membershipId}/submissions`,
-        payload,
+        `/api/submissions`,
+        { ...payload, membershipId },
       )
       set({ submissionId: created.id })
       return created

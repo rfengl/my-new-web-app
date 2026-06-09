@@ -10,4 +10,5 @@ public interface IMembershipService
     Membership              Create(CreateMembershipRequest request);
     Membership?             Update(string id, UpdateMembershipRequest request);
     bool                    Delete(string id);
+    void                    SetSubmissionId(string membershipId, string submissionId);
 }

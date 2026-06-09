@@ -26,7 +26,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 function Step({ number, children }: { number: number; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-800 text-white text-xs
+      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-700 text-white text-xs
                        flex items-center justify-center font-semibold mt-0.5">
         {number}
       </span>
@@ -37,24 +37,24 @@ function Step({ number, children }: { number: number; children: React.ReactNode 
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
-      <svg className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="flex gap-2 bg-[#eff6ff] border border-[#bfdbfe] rounded-lg px-4 py-3">
+      <svg className="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <p className="text-slate-500 text-sm">{children}</p>
+      <p className="text-[#1e40af] text-sm">{children}</p>
     </div>
   )
 }
 
 function Warning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-      <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="flex gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-lg px-4 py-3">
+      <svg className="w-4 h-4 text-[#f59e0b] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
-      <p className="text-red-600 text-sm">{children}</p>
+      <p className="text-[#92400e] text-sm">{children}</p>
     </div>
   )
 }
@@ -107,7 +107,7 @@ export default function UserGuide() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
           <button onClick={() => navigate('/cases')}
-            className="text-slate-400 hover:text-slate-700 transition-colors">
+            className="text-slate-400 hover:text-primary-700 transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -127,7 +127,7 @@ export default function UserGuide() {
             <nav className="space-y-1">
               {sections.map(s => (
                 <a key={s.id} href={`#${s.id}`}
-                  className="block text-sm text-slate-500 hover:text-slate-800 py-1 transition-colors">
+                  className="block text-sm text-slate-500 hover:text-primary-700 py-1 transition-colors">
                   {s.title}
                 </a>
               ))}

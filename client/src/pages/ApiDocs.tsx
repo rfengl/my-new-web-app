@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 const METHOD_STYLES = {
   GET:    'bg-emerald-100 text-emerald-700',
-  POST:   'bg-blue-100 text-blue-700',
+  POST:   'bg-primary-100 text-primary-700',
   PUT:    'bg-amber-100 text-amber-700',
   DELETE: 'bg-red-100 text-red-700',
 }
@@ -62,7 +62,7 @@ function ParamTable({ rows }: { rows: string[][] }) {
           {rows.map(([name, type, req, desc]) => (
             <tr key={name}>
               <td className="px-3 py-2 font-mono text-xs text-slate-700">{name}</td>
-              <td className="px-3 py-2 text-xs text-blue-600 font-mono">{type}</td>
+              <td className="px-3 py-2 text-xs text-primary-600 font-mono">{type}</td>
               <td className="px-3 py-2 text-xs">
                 <span className={req === 'Yes' ? 'text-red-500 font-medium' : 'text-slate-400'}>{req}</span>
               </td>
@@ -205,13 +205,13 @@ export default function ApiDocs() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
           <button onClick={() => navigate('/cases')}
-            className="text-slate-400 hover:text-slate-700 transition-colors">
+            className="text-slate-400 hover:text-primary-700 transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <h1 className="font-semibold text-slate-800">API Documentation</h1>
-          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">v1</span>
+          <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded font-medium">v1</span>
         </div>
       </header>
 
@@ -223,7 +223,7 @@ export default function ApiDocs() {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Contents</p>
             {nav.map(n => (
               <a key={n.id} href={`#${n.id}`}
-                className="block text-sm text-slate-500 hover:text-slate-800 py-1 transition-colors">
+                className="block text-sm text-slate-500 hover:text-primary-700 py-1 transition-colors">
                 {n.label}
               </a>
             ))}

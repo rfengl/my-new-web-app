@@ -19,4 +19,5 @@ public class Membership
     public string  PolicyLapseDate       { get; set; } = string.Empty;
     public string  Status                { get; set; } = "Inforce";
     public string  UnderwritingExclusion { get; set; } = string.Empty;
+    public string? SubmissionId          { get; set; }
 }
