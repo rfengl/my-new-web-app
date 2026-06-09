@@ -9,10 +9,24 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
     public DbSet<Membership>   Memberships   => Set<Membership>();
     public DbSet<SubmissionGL> SubmissionsGL => Set<SubmissionGL>();
     public DbSet<User>         Users         => Set<User>();
+    public DbSet<UserRole>     UserRoles     => Set<UserRole>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
         model.HasDefaultSchema("dbo");
+
+        model.Entity<UserRole>(e =>
+        {
+            e.ToTable("E_UserRole");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Id)          .HasColumnType("tinyint").ValueGeneratedNever();
+            e.Property(r => r.Code)        .HasMaxLength(20).IsRequired();
+            e.Property(r => r.Name)        .HasMaxLength(50).IsRequired();
+            e.Property(r => r.CreatedDate) .HasColumnType("datetime2");
+            e.Property(r => r.CreatedBy)   .HasColumnType("int");
+            e.Property(r => r.ModifiedDate).HasColumnType("datetime2");
+            e.Property(r => r.ModifiedBy)  .HasColumnType("int");
+        });
 
         model.Entity<Company>(e =>
         {
@@ -61,12 +75,16 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(u => u.Email)        .HasMaxLength(200).IsRequired();
             e.Property(u => u.PasswordHash) .HasMaxLength(500).IsRequired();
             e.Property(u => u.Name)         .HasMaxLength(200).IsRequired();
-            e.Property(u => u.Role)         .HasMaxLength(50).HasDefaultValue("User");
+            e.Property(u => u.RoleId)       .HasColumnType("tinyint");
             e.Property(u => u.CreatedDate)  .HasColumnType("datetime2");
             e.Property(u => u.CreatedBy)    .HasColumnType("int");
             e.Property(u => u.ModifiedDate) .HasColumnType("datetime2");
             e.Property(u => u.ModifiedBy)   .HasColumnType("int");
             e.HasIndex(u => u.Email).IsUnique();
+            e.HasOne(u => u.Role)
+             .WithMany()
+             .HasForeignKey(u => u.RoleId)
+             .OnDelete(DeleteBehavior.Restrict);
             e.HasOne<Company>()
              .WithMany()
              .HasForeignKey(u => u.CompanyId)

@@ -23,6 +23,20 @@ namespace CasePortal.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CasePortal.Api.Models.UserRole", b =>
+            {
+                b.Property<byte>("Id")
+                    .HasColumnType("tinyint");
+                b.Property<string>("Code").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("");
+                b.Property<string>("Name").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
+                b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
+                b.Property<int>("CreatedBy").HasColumnType("int");
+                b.Property<DateTime>("ModifiedDate").HasColumnType("datetime2");
+                b.Property<int>("ModifiedBy").HasColumnType("int");
+                b.HasKey("Id");
+                b.ToTable("E_UserRole", (string)null);
+            });
+
             modelBuilder.Entity("CasePortal.Api.Models.Company", b =>
             {
                 b.Property<int>("Id")
@@ -105,6 +119,7 @@ namespace CasePortal.Api.Migrations
                     .HasColumnType("int")
                     .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<int?>("CompanyId").HasColumnType("int");
+                b.Property<byte>("RoleId").HasColumnType("tinyint");
                 b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
                 b.Property<int>("CreatedBy").HasColumnType("int");
                 b.Property<DateTime>("ModifiedDate").HasColumnType("datetime2");
@@ -113,10 +128,10 @@ namespace CasePortal.Api.Migrations
                 b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
                 b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
                 b.Property<string>("PasswordHash").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)");
-                b.Property<string>("Role").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("User");
                 b.HasKey("Id");
                 b.HasIndex("CompanyId");
                 b.HasIndex("Email").IsUnique();
+                b.HasIndex("RoleId");
                 b.ToTable("T_User", (string)null);
             });
 
@@ -135,6 +150,14 @@ namespace CasePortal.Api.Migrations
                     .WithMany()
                     .HasForeignKey("CompanyId")
                     .OnDelete(DeleteBehavior.SetNull);
+
+                b.HasOne("CasePortal.Api.Models.UserRole", "Role")
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                b.Navigation("Role");
             });
 #pragma warning restore 612, 618
         }

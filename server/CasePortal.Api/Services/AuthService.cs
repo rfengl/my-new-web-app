@@ -11,8 +11,9 @@ public class AuthService(CasePortalDbContext db, IConfiguration config) : IAuthS
 {
     public async Task<string?> LoginAsync(string email, string password)
     {
-        var user = await db.Users.FirstOrDefaultAsync(u =>
-            u.Email.ToLower() == email.ToLower() && u.IsActive);
+        var user = await db.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower() && u.IsActive);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             return null;
@@ -27,7 +28,7 @@ public class AuthService(CasePortalDbContext db, IConfiguration config) : IAuthS
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email,          user.Email),
                 new Claim(ClaimTypes.Name,           user.Name),
-                new Claim(ClaimTypes.Role,           user.Role),
+                new Claim(ClaimTypes.Role,           user.Role?.Name ?? "User"),
             ],
             expires:            DateTime.UtcNow.AddSeconds(86400),
             signingCredentials: creds);
