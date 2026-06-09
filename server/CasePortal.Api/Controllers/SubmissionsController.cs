@@ -9,44 +9,72 @@ namespace CasePortal.Api.Controllers;
 [ApiController]
 [Route("api/submissions")]
 [Authorize]
-public class SubmissionsController(ISubmissionService submissions) : ControllerBase
+public class SubmissionsController(ISubmissionService submissions, IIdEncryptionService enc) : ControllerBase
 {
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
-        var s = await submissions.GetByIdAsync(id);
-        if (s is null)
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Submission {id} does not exist." });
+        if (!TryDecrypt(id, out var rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
 
-        return Ok(s);
+        var s = await submissions.GetByIdAsync(rawId);
+        if (s is null)
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
+
+        return Ok(ToResponse(s));
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateSubmissionRequest request)
     {
-        var created = await submissions.CreateAsync(request);
-        if (created is null)
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {request.MembershipId} does not exist." });
+        if (!TryDecrypt(request.MembershipId, out var membershipId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        var created = await submissions.CreateAsync(membershipId, request);
+        if (created is null)
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
+
+        var response = ToResponse(created);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateSubmissionRequest request)
     {
-        var updated = await submissions.UpdateAsync(id, request);
-        if (updated is null)
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Submission {id} does not exist." });
+        if (!TryDecrypt(id, out var rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
 
-        return Ok(updated);
+        var updated = await submissions.UpdateAsync(rawId, request);
+        if (updated is null)
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
+
+        return Ok(ToResponse(updated));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        if (!await submissions.DeleteAsync(id))
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Submission {id} does not exist." });
+        if (!TryDecrypt(id, out var rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
+
+        if (!await submissions.DeleteAsync(rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
 
         return NoContent();
+    }
+
+    private SubmissionResponse ToResponse(Models.SubmissionGL s) => new(
+        enc.Encrypt(s.Id),
+        enc.Encrypt(s.MembershipId),
+        s.SubmissionStatus, s.RequestType, s.GlType, s.DisplayStatus, s.Mrn,
+        s.BillingDate, s.DateOfAdmission, s.DateOfDischarge,
+        s.DoctorName, s.DoctorSpecialty, s.ProvisionalDiagnosis,
+        s.IcdCode, s.EstimatedCost, s.CreatedDate
+    );
+
+    private bool TryDecrypt(string token, out int id)
+    {
+        try   { id = enc.Decrypt(token); return true; }
+        catch { id = 0;                  return false; }
     }
 }

@@ -10,15 +10,13 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
     public async Task<IEnumerable<Membership>> GetAllAsync()
         => await db.Memberships.OrderByDescending(m => m.Date).ToListAsync();
 
-    public async Task<Membership?> GetByIdAsync(string id)
+    public async Task<Membership?> GetByIdAsync(int id)
         => await db.Memberships.FindAsync(id);
 
     public async Task<Membership> CreateAsync(CreateMembershipRequest req)
     {
-        var nextId = await NextMembershipIdAsync();
         var m = new Membership
         {
-            Id                    = nextId,
             Date                  = DateTime.UtcNow.ToString("yyyy-MM-dd"),
             Name                  = req.Name,
             Nric                  = req.Nric,
@@ -41,7 +39,7 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         return m;
     }
 
-    public async Task<Membership?> UpdateAsync(string id, UpdateMembershipRequest req)
+    public async Task<Membership?> UpdateAsync(int id, UpdateMembershipRequest req)
     {
         var m = await db.Memberships.FindAsync(id);
         if (m is null) return null;
@@ -66,7 +64,7 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         return m;
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var m = await db.Memberships.FindAsync(id);
         if (m is null) return false;
@@ -75,7 +73,7 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         return true;
     }
 
-    public async Task SetSubmissionIdAsync(string membershipId, string submissionId)
+    public async Task SetSubmissionIdAsync(int membershipId, int submissionId)
     {
         var m = await db.Memberships.FindAsync(membershipId);
         if (m is not null)
@@ -83,15 +81,5 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
             m.SubmissionId = submissionId;
             await db.SaveChangesAsync();
         }
-    }
-
-    private async Task<string> NextMembershipIdAsync()
-    {
-        var ids = await db.Memberships.Select(m => m.Id).ToListAsync();
-        var max = ids
-            .Select(id => int.TryParse(id.Replace("C-", ""), out var n) ? n : 0)
-            .DefaultIfEmpty(0)
-            .Max();
-        return $"C-{(max + 1):D3}";
     }
 }

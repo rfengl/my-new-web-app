@@ -7,19 +7,17 @@ namespace CasePortal.Api.Services;
 
 public class SubmissionService(CasePortalDbContext db) : ISubmissionService
 {
-    public async Task<SubmissionGL?> GetByIdAsync(string id)
+    public async Task<SubmissionGL?> GetByIdAsync(int id)
         => await db.SubmissionsGL.FindAsync(id);
 
-    public async Task<SubmissionGL?> CreateAsync(CreateSubmissionRequest req)
+    public async Task<SubmissionGL?> CreateAsync(int membershipId, CreateSubmissionRequest req)
     {
-        var membership = await db.Memberships.FindAsync(req.MembershipId);
+        var membership = await db.Memberships.FindAsync(membershipId);
         if (membership is null) return null;
 
-        var nextId = await NextSubmissionIdAsync();
         var s = new SubmissionGL
         {
-            Id                   = nextId,
-            MembershipId         = req.MembershipId,
+            MembershipId         = membershipId,
             SubmissionStatus     = req.SubmissionStatus,
             RequestType          = req.RequestType,
             GlType               = req.GlType,
@@ -36,12 +34,13 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
         };
 
         db.SubmissionsGL.Add(s);
+        await db.SaveChangesAsync(); // EF assigns s.Id from IDENTITY after this
         membership.SubmissionId = s.Id;
         await db.SaveChangesAsync();
         return s;
     }
 
-    public async Task<SubmissionGL?> UpdateAsync(string id, UpdateSubmissionRequest req)
+    public async Task<SubmissionGL?> UpdateAsync(int id, UpdateSubmissionRequest req)
     {
         var s = await db.SubmissionsGL.FindAsync(id);
         if (s is null) return null;
@@ -63,22 +62,12 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
         return s;
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var s = await db.SubmissionsGL.FindAsync(id);
         if (s is null) return false;
         db.SubmissionsGL.Remove(s);
         await db.SaveChangesAsync();
         return true;
-    }
-
-    private async Task<string> NextSubmissionIdAsync()
-    {
-        var ids = await db.SubmissionsGL.Select(s => s.Id).ToListAsync();
-        var max = ids
-            .Select(id => int.TryParse(id.Replace("GL-", ""), out var n) ? n : 0)
-            .DefaultIfEmpty(0)
-            .Max();
-        return $"GL-{(max + 1):D3}";
     }
 }

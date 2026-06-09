@@ -20,6 +20,7 @@ builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<DatabaseSeeder>();
+builder.Services.AddSingleton<IIdEncryptionService, IdEncryptionService>();
 
 // JWT authentication
 var jwtKey = builder.Configuration["Jwt:Key"]

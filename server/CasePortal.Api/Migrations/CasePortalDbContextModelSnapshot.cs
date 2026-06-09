@@ -24,34 +24,24 @@ namespace CasePortal.Api.Migrations
 
             modelBuilder.Entity("CasePortal.Api.Models.Company", b =>
             {
-                b.Property<string>("Id").HasMaxLength(20).HasColumnType("nvarchar(20)");
-                b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int")
+                    .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<string>("Code").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
-                b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
                 b.Property<string>("CreatedDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
+                b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
+                b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
                 b.HasKey("Id");
                 b.ToTable("T_Company", (string)null);
             });
 
-            modelBuilder.Entity("CasePortal.Api.Models.User", b =>
-            {
-                b.Property<string>("Id").HasMaxLength(20).HasColumnType("nvarchar(20)");
-                b.Property<string>("Email").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                b.Property<string>("PasswordHash").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)");
-                b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                b.Property<string>("Role").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("User");
-                b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
-                b.Property<string>("CreatedDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
-                b.Property<string>("CompanyId").HasMaxLength(20).HasColumnType("nvarchar(20)");
-                b.HasKey("Id");
-                b.HasIndex("CompanyId");
-                b.HasIndex("Email").IsUnique();
-                b.ToTable("T_User", (string)null);
-            });
-
             modelBuilder.Entity("CasePortal.Api.Models.Membership", b =>
             {
-                b.Property<string>("Id").HasMaxLength(20).HasColumnType("nvarchar(20)");
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int")
+                    .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<string>("CoInsurance").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
                 b.Property<decimal>("CoPayment").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
                 b.Property<string>("Company").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasDefaultValue("");
@@ -67,7 +57,7 @@ namespace CasePortal.Api.Migrations
                 b.Property<string>("PolicyNo").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
                 b.Property<decimal>("RbEntitlement").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
                 b.Property<string>("Status").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("Inforce");
-                b.Property<string>("SubmissionId").HasMaxLength(20).HasColumnType("nvarchar(20)");
+                b.Property<int?>("SubmissionId").HasColumnType("int");
                 b.Property<string>("UnderwritingExclusion").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)").HasDefaultValue("");
                 b.HasKey("Id");
                 b.ToTable("T_Membership", (string)null);
@@ -75,7 +65,10 @@ namespace CasePortal.Api.Migrations
 
             modelBuilder.Entity("CasePortal.Api.Models.SubmissionGL", b =>
             {
-                b.Property<string>("Id").HasMaxLength(20).HasColumnType("nvarchar(20)");
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int")
+                    .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<string>("BillingDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
                 b.Property<string>("CreatedDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
                 b.Property<string>("DateOfAdmission").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
@@ -85,7 +78,7 @@ namespace CasePortal.Api.Migrations
                 b.Property<decimal>("EstimatedCost").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
                 b.Property<int>("GlType").HasColumnType("int").HasDefaultValue(0);
                 b.Property<string>("IcdCode").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("");
-                b.Property<string>("MembershipId").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)");
+                b.Property<int>("MembershipId").HasColumnType("int");
                 b.Property<string>("Mrn").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
                 b.Property<string>("ProvisionalDiagnosis").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)").HasDefaultValue("");
                 b.Property<string>("RequestType").IsRequired().HasMaxLength(100).HasColumnType("nvarchar(100)").HasDefaultValue("");
@@ -97,10 +90,21 @@ namespace CasePortal.Api.Migrations
 
             modelBuilder.Entity("CasePortal.Api.Models.User", b =>
             {
-                b.HasOne("CasePortal.Api.Models.Company", null)
-                    .WithMany()
-                    .HasForeignKey("CompanyId")
-                    .OnDelete(DeleteBehavior.SetNull);
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int")
+                    .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                b.Property<int?>("CompanyId").HasColumnType("int");
+                b.Property<string>("CreatedDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
+                b.Property<string>("Email").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
+                b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                b.Property<string>("PasswordHash").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)");
+                b.Property<string>("Role").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("User");
+                b.HasKey("Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("Email").IsUnique();
+                b.ToTable("T_User", (string)null);
             });
 
             modelBuilder.Entity("CasePortal.Api.Models.SubmissionGL", b =>
@@ -110,6 +114,14 @@ namespace CasePortal.Api.Migrations
                     .HasForeignKey("MembershipId")
                     .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired();
+            });
+
+            modelBuilder.Entity("CasePortal.Api.Models.User", b =>
+            {
+                b.HasOne("CasePortal.Api.Models.Company", null)
+                    .WithMany()
+                    .HasForeignKey("CompanyId")
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 #pragma warning restore 612, 618
         }

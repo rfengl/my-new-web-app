@@ -9,48 +9,74 @@ namespace CasePortal.Api.Controllers;
 [ApiController]
 [Route("api/memberships")]
 [Authorize]
-public class MembershipsController(IMembershipService memberships) : ControllerBase
+public class MembershipsController(IMembershipService memberships, IIdEncryptionService enc) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var all = (await memberships.GetAllAsync()).ToList();
+        var all = (await memberships.GetAllAsync()).Select(ToResponse).ToList();
         return Ok(new { data = all, total = all.Count });
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
-        var m = await memberships.GetByIdAsync(id);
-        if (m is null)
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {id} does not exist." });
+        if (!TryDecrypt(id, out var rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
-        return Ok(m);
+        var m = await memberships.GetByIdAsync(rawId);
+        if (m is null)
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
+
+        return Ok(ToResponse(m));
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMembershipRequest request)
     {
-        var created = await memberships.CreateAsync(request);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        var created  = await memberships.CreateAsync(request);
+        var response = ToResponse(created);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateMembershipRequest request)
     {
-        var updated = await memberships.UpdateAsync(id, request);
-        if (updated is null)
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {id} does not exist." });
+        if (!TryDecrypt(id, out var rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
-        return Ok(updated);
+        var updated = await memberships.UpdateAsync(rawId, request);
+        if (updated is null)
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
+
+        return Ok(ToResponse(updated));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        if (!await memberships.DeleteAsync(id))
-            return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {id} does not exist." });
+        if (!TryDecrypt(id, out var rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
+
+        if (!await memberships.DeleteAsync(rawId))
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
         return NoContent();
+    }
+
+    private MembershipResponse ToResponse(Models.Membership m) => new(
+        enc.Encrypt(m.Id),
+        m.Date, m.Name, m.Nric, m.PassportNo,
+        m.Insurance, m.Company, m.PolicyNo,
+        m.RbEntitlement, m.CoPayment, m.CoInsurance, m.Deductible,
+        m.PolicyEffDate, m.PolicyExpDate, m.PolicyLapseDate,
+        m.Status, m.UnderwritingExclusion,
+        m.SubmissionId.HasValue ? enc.Encrypt(m.SubmissionId.Value) : null
+    );
+
+    private bool TryDecrypt(string token, out int id)
+    {
+        try   { id = enc.Decrypt(token); return true; }
+        catch { id = 0;                  return false; }
     }
 }

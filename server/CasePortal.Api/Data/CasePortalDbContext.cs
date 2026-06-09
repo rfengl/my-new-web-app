@@ -14,11 +14,21 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
     {
         model.HasDefaultSchema("dbo");
 
+        model.Entity<Company>(e =>
+        {
+            e.ToTable("T_Company");
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Id)         .ValueGeneratedOnAdd();
+            e.Property(c => c.Name)        .HasMaxLength(200).IsRequired();
+            e.Property(c => c.Code)        .HasMaxLength(50);
+            e.Property(c => c.CreatedDate) .HasMaxLength(10);
+        });
+
         model.Entity<Membership>(e =>
         {
             e.ToTable("T_Membership");
             e.HasKey(m => m.Id);
-            e.Property(m => m.Id)                    .HasMaxLength(20);
+            e.Property(m => m.Id)                    .ValueGeneratedOnAdd();
             e.Property(m => m.Date)                  .HasMaxLength(10);
             e.Property(m => m.Name)                  .HasMaxLength(200).IsRequired();
             e.Property(m => m.Nric)                  .HasMaxLength(20);
@@ -35,30 +45,18 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(m => m.PolicyLapseDate)        .HasMaxLength(10);
             e.Property(m => m.Status)                 .HasMaxLength(50).HasDefaultValue("Inforce");
             e.Property(m => m.UnderwritingExclusion)  .HasMaxLength(500);
-            e.Property(m => m.SubmissionId)           .HasMaxLength(20);
-        });
-
-        model.Entity<Company>(e =>
-        {
-            e.ToTable("T_Company");
-            e.HasKey(c => c.Id);
-            e.Property(c => c.Id)          .HasMaxLength(20);
-            e.Property(c => c.Name)         .HasMaxLength(200).IsRequired();
-            e.Property(c => c.Code)         .HasMaxLength(50);
-            e.Property(c => c.CreatedDate)  .HasMaxLength(10);
         });
 
         model.Entity<User>(e =>
         {
             e.ToTable("T_User");
             e.HasKey(u => u.Id);
-            e.Property(u => u.Id)           .HasMaxLength(20);
+            e.Property(u => u.Id)           .ValueGeneratedOnAdd();
             e.Property(u => u.Email)         .HasMaxLength(200).IsRequired();
             e.Property(u => u.PasswordHash)  .HasMaxLength(500).IsRequired();
             e.Property(u => u.Name)          .HasMaxLength(200).IsRequired();
             e.Property(u => u.Role)          .HasMaxLength(50).HasDefaultValue("User");
             e.Property(u => u.CreatedDate)   .HasMaxLength(10);
-            e.Property(u => u.CompanyId)     .HasMaxLength(20);
             e.HasIndex(u => u.Email).IsUnique();
             e.HasOne<Company>()
              .WithMany()
@@ -70,8 +68,8 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
         {
             e.ToTable("T_SubmissionGL");
             e.HasKey(s => s.Id);
-            e.Property(s => s.Id)                    .HasMaxLength(20);
-            e.Property(s => s.MembershipId)           .HasMaxLength(20).IsRequired();
+            e.Property(s => s.Id)                    .ValueGeneratedOnAdd();
+            e.Property(s => s.MembershipId)           .IsRequired();
             e.Property(s => s.SubmissionStatus)       .HasMaxLength(50);
             e.Property(s => s.RequestType)            .HasMaxLength(100);
             e.Property(s => s.Mrn)                    .HasMaxLength(50);
@@ -85,6 +83,10 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(s => s.EstimatedCost)          .HasColumnType("decimal(18,2)");
             e.Property(s => s.CreatedDate)            .HasMaxLength(10);
             e.Ignore(s => s.DisplayStatus);
+            e.HasOne<Membership>()
+             .WithMany()
+             .HasForeignKey(s => s.MembershipId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
