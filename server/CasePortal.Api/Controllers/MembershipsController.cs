@@ -9,7 +9,7 @@ namespace CasePortal.Api.Controllers;
 [ApiController]
 [Route("api/memberships")]
 [Authorize]
-public class MembershipsController(IMembershipService memberships, IIdEncryptionService enc) : ControllerBase
+public class MembershipsController(IMembershipService memberships, IIdEncryptionService enc, IDateFormatter dates) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -66,13 +66,13 @@ public class MembershipsController(IMembershipService memberships, IIdEncryption
 
     private MembershipResponse ToResponse(Models.Membership m) => new(
         enc.Encrypt(m.Id),
-        m.Date.ToString("yyyy-MM-dd"),
+        dates.Format(m.Date),
         m.Name, m.Nric, m.PassportNo,
         m.Insurance, m.Company, m.PolicyNo,
         m.RbEntitlement, m.CoPayment, m.CoInsurance, m.Deductible,
-        m.PolicyEffDate?.ToString("yyyy-MM-dd")   ?? "",
-        m.PolicyExpDate?.ToString("yyyy-MM-dd")   ?? "",
-        m.PolicyLapseDate?.ToString("yyyy-MM-dd") ?? "",
+        dates.Format(m.PolicyEffDate),
+        dates.Format(m.PolicyExpDate),
+        dates.Format(m.PolicyLapseDate),
         m.Status, m.UnderwritingExclusion,
         m.SubmissionId.HasValue ? enc.Encrypt(m.SubmissionId.Value) : null
     );

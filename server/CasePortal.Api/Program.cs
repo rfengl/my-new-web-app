@@ -21,6 +21,7 @@ builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddSingleton<IIdEncryptionService, IdEncryptionService>();
+builder.Services.AddSingleton<IDateFormatter, DateFormatter>();
 
 // JWT authentication
 var jwtKey = builder.Configuration["Jwt:Key"]

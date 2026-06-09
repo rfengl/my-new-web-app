@@ -9,7 +9,7 @@ namespace CasePortal.Api.Controllers;
 [ApiController]
 [Route("api/submissions")]
 [Authorize]
-public class SubmissionsController(ISubmissionService submissions, IIdEncryptionService enc) : ControllerBase
+public class SubmissionsController(ISubmissionService submissions, IIdEncryptionService enc, IDateFormatter dates) : ControllerBase
 {
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
@@ -67,11 +67,11 @@ public class SubmissionsController(ISubmissionService submissions, IIdEncryption
         enc.Encrypt(s.Id),
         enc.Encrypt(s.MembershipId),
         s.SubmissionStatus, s.RequestType, s.GlType, s.DisplayStatus, s.Mrn,
-        s.BillingDate?.ToString("yyyy-MM-dd")    ?? "",
-        s.DateOfAdmission?.ToString("yyyy-MM-dd") ?? "",
-        s.DateOfDischarge?.ToString("yyyy-MM-dd") ?? "",
+        dates.Format(s.BillingDate),
+        dates.Format(s.DateOfAdmission),
+        dates.Format(s.DateOfDischarge),
         s.DoctorName, s.DoctorSpecialty, s.ProvisionalDiagnosis,
-        s.IcdCode, s.EstimatedCost, s.CreatedDate.ToString("yyyy-MM-dd")
+        s.IcdCode, s.EstimatedCost, dates.Format(s.CreatedDate)
     );
 
     private bool TryDecrypt(string token, out int id)
