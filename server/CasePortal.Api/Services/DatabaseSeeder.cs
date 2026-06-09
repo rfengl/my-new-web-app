@@ -8,6 +8,19 @@ public class DatabaseSeeder(CasePortalDbContext db)
 {
     public async Task SeedAsync()
     {
+        if (!await db.Companies.AnyAsync())
+        {
+            db.Companies.Add(new Company
+            {
+                Id          = "CO-001",
+                Name        = "Default Company",
+                Code        = "DEFAULT",
+                IsActive    = true,
+                CreatedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            });
+            await db.SaveChangesAsync();
+        }
+
         if (!await db.Users.AnyAsync())
         {
             db.Users.Add(new User
@@ -18,6 +31,7 @@ public class DatabaseSeeder(CasePortalDbContext db)
                 Name         = "Administrator",
                 Role         = "Admin",
                 IsActive     = true,
+                CompanyId    = "CO-001",
                 CreatedDate  = DateTime.UtcNow.ToString("yyyy-MM-dd"),
             });
             await db.SaveChangesAsync();

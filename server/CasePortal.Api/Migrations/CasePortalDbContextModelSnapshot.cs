@@ -22,6 +22,17 @@ namespace CasePortal.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CasePortal.Api.Models.Company", b =>
+            {
+                b.Property<string>("Id").HasMaxLength(20).HasColumnType("nvarchar(20)");
+                b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                b.Property<string>("Code").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
+                b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
+                b.Property<string>("CreatedDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
+                b.HasKey("Id");
+                b.ToTable("T_Company", (string)null);
+            });
+
             modelBuilder.Entity("CasePortal.Api.Models.User", b =>
             {
                 b.Property<string>("Id").HasMaxLength(20).HasColumnType("nvarchar(20)");
@@ -31,7 +42,9 @@ namespace CasePortal.Api.Migrations
                 b.Property<string>("Role").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("User");
                 b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
                 b.Property<string>("CreatedDate").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)").HasDefaultValue("");
+                b.Property<string>("CompanyId").HasMaxLength(20).HasColumnType("nvarchar(20)");
                 b.HasKey("Id");
+                b.HasIndex("CompanyId");
                 b.HasIndex("Email").IsUnique();
                 b.ToTable("T_User", (string)null);
             });
@@ -80,6 +93,14 @@ namespace CasePortal.Api.Migrations
                 b.HasKey("Id");
                 b.HasIndex("MembershipId");
                 b.ToTable("T_SubmissionGL", (string)null);
+            });
+
+            modelBuilder.Entity("CasePortal.Api.Models.User", b =>
+            {
+                b.HasOne("CasePortal.Api.Models.Company", null)
+                    .WithMany()
+                    .HasForeignKey("CompanyId")
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity("CasePortal.Api.Models.SubmissionGL", b =>

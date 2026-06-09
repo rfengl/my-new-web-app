@@ -5,6 +5,7 @@ namespace CasePortal.Api.Data;
 
 public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) : DbContext(options)
 {
+    public DbSet<Company>      Companies     => Set<Company>();
     public DbSet<Membership>   Memberships   => Set<Membership>();
     public DbSet<SubmissionGL> SubmissionsGL => Set<SubmissionGL>();
     public DbSet<User>         Users         => Set<User>();
@@ -37,6 +38,16 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(m => m.SubmissionId)           .HasMaxLength(20);
         });
 
+        model.Entity<Company>(e =>
+        {
+            e.ToTable("T_Company");
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Id)          .HasMaxLength(20);
+            e.Property(c => c.Name)         .HasMaxLength(200).IsRequired();
+            e.Property(c => c.Code)         .HasMaxLength(50);
+            e.Property(c => c.CreatedDate)  .HasMaxLength(10);
+        });
+
         model.Entity<User>(e =>
         {
             e.ToTable("T_User");
@@ -47,7 +58,12 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(u => u.Name)          .HasMaxLength(200).IsRequired();
             e.Property(u => u.Role)          .HasMaxLength(50).HasDefaultValue("User");
             e.Property(u => u.CreatedDate)   .HasMaxLength(10);
+            e.Property(u => u.CompanyId)     .HasMaxLength(20);
             e.HasIndex(u => u.Email).IsUnique();
+            e.HasOne<Company>()
+             .WithMany()
+             .HasForeignKey(u => u.CompanyId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         model.Entity<SubmissionGL>(e =>
