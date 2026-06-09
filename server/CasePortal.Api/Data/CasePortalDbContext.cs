@@ -15,6 +15,7 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
     {
         model.HasDefaultSchema("dbo");
 
+        // E_UserRole — static lookup table; no FK on audit columns to avoid circular seeding dependency
         model.Entity<UserRole>(e =>
         {
             e.ToTable("E_UserRole");
@@ -39,6 +40,8 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(c => c.CreatedBy)   .HasColumnType("int");
             e.Property(c => c.ModifiedDate).HasColumnType("datetime2");
             e.Property(c => c.ModifiedBy)  .HasColumnType("int");
+            e.HasOne<User>().WithMany().HasForeignKey(c => c.CreatedBy) .OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_Company_T_User_CreatedBy");
+            e.HasOne<User>().WithMany().HasForeignKey(c => c.ModifiedBy).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_Company_T_User_ModifiedBy");
         });
 
         model.Entity<Membership>(e =>
@@ -65,6 +68,8 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(m => m.PolicyLapseDate)        .HasColumnType("date");
             e.Property(m => m.Status)                 .HasMaxLength(50).HasDefaultValue("Inforce");
             e.Property(m => m.UnderwritingExclusion)  .HasMaxLength(500);
+            e.HasOne<User>().WithMany().HasForeignKey(m => m.CreatedBy) .OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_Membership_T_User_CreatedBy");
+            e.HasOne<User>().WithMany().HasForeignKey(m => m.ModifiedBy).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_Membership_T_User_ModifiedBy");
         });
 
         model.Entity<User>(e =>
@@ -89,6 +94,9 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
              .WithMany()
              .HasForeignKey(u => u.CompanyId)
              .OnDelete(DeleteBehavior.SetNull);
+            // Self-referential audit FKs
+            e.HasOne<User>().WithMany().HasForeignKey(u => u.CreatedBy) .OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_User_T_User_CreatedBy");
+            e.HasOne<User>().WithMany().HasForeignKey(u => u.ModifiedBy).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_User_T_User_ModifiedBy");
         });
 
         model.Entity<SubmissionGL>(e =>
@@ -117,6 +125,8 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
              .WithMany()
              .HasForeignKey(s => s.MembershipId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<User>().WithMany().HasForeignKey(s => s.CreatedBy) .OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_SubmissionGL_T_User_CreatedBy");
+            e.HasOne<User>().WithMany().HasForeignKey(s => s.ModifiedBy).OnDelete(DeleteBehavior.NoAction).HasConstraintName("FK_T_SubmissionGL_T_User_ModifiedBy");
         });
     }
 }

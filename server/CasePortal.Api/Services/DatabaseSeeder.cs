@@ -10,7 +10,7 @@ public class DatabaseSeeder(CasePortalDbContext db)
     {
         var now = DateTime.UtcNow;
 
-        // Seed user roles
+        // 1. Seed user roles first (E_UserRole has no FK on CreatedBy, so order is safe)
         if (!await db.UserRoles.AnyAsync())
         {
             db.UserRoles.AddRange(
@@ -21,7 +21,22 @@ public class DatabaseSeeder(CasePortalDbContext db)
             await db.SaveChangesAsync();
         }
 
-        // Seed default company
+        // 2. Insert Anonymous user (Id=0) via raw SQL — must exist before Company/Admin are seeded
+        //    because their CreatedBy FK references T_User.Id.
+        if (!await db.Users.AnyAsync(u => u.Id == 0))
+        {
+            await db.Database.ExecuteSqlRawAsync(@"
+                SET IDENTITY_INSERT [dbo].[T_User] ON;
+                INSERT INTO [dbo].[T_User]
+                    ([Id], [Email], [PasswordHash], [Name], [RoleId], [IsActive],
+                     [CreatedDate], [CreatedBy], [ModifiedDate], [ModifiedBy], [CompanyId])
+                VALUES
+                    (0, 'anonymous@system', '', 'Anonymous', 1, 0,
+                     GETUTCDATE(), 0, GETUTCDATE(), 0, NULL);
+                SET IDENTITY_INSERT [dbo].[T_User] OFF;");
+        }
+
+        // 3. Seed default company
         Company company;
         if (!await db.Companies.AnyAsync())
         {
@@ -43,8 +58,8 @@ public class DatabaseSeeder(CasePortalDbContext db)
             company = await db.Companies.FirstAsync();
         }
 
-        // Seed admin user
-        if (!await db.Users.AnyAsync())
+        // 4. Seed admin user
+        if (!await db.Users.AnyAsync(u => u.Email == "admin@example.com"))
         {
             var adminRole = await db.UserRoles.FirstAsync(r => r.Name == "Admin");
             db.Users.Add(new User

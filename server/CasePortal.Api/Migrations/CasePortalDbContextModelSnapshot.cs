@@ -25,8 +25,7 @@ namespace CasePortal.Api.Migrations
 
             modelBuilder.Entity("CasePortal.Api.Models.UserRole", b =>
             {
-                b.Property<byte>("Id")
-                    .HasColumnType("tinyint");
+                b.Property<byte>("Id").HasColumnType("tinyint");
                 b.Property<string>("Code").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("");
                 b.Property<string>("Name").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
                 b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
@@ -51,6 +50,8 @@ namespace CasePortal.Api.Migrations
                 b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
                 b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
                 b.HasKey("Id");
+                b.HasIndex("CreatedBy").HasDatabaseName("IX_T_Company_CreatedBy");
+                b.HasIndex("ModifiedBy").HasDatabaseName("IX_T_Company_ModifiedBy");
                 b.ToTable("T_Company", (string)null);
             });
 
@@ -81,6 +82,8 @@ namespace CasePortal.Api.Migrations
                 b.Property<int?>("SubmissionId").HasColumnType("int");
                 b.Property<string>("UnderwritingExclusion").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)").HasDefaultValue("");
                 b.HasKey("Id");
+                b.HasIndex("CreatedBy").HasDatabaseName("IX_T_Membership_CreatedBy");
+                b.HasIndex("ModifiedBy").HasDatabaseName("IX_T_Membership_ModifiedBy");
                 b.ToTable("T_Membership", (string)null);
             });
 
@@ -108,7 +111,9 @@ namespace CasePortal.Api.Migrations
                 b.Property<string>("RequestType").IsRequired().HasMaxLength(100).HasColumnType("nvarchar(100)").HasDefaultValue("");
                 b.Property<string>("SubmissionStatus").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
                 b.HasKey("Id");
+                b.HasIndex("CreatedBy").HasDatabaseName("IX_T_SubmissionGL_CreatedBy");
                 b.HasIndex("MembershipId");
+                b.HasIndex("ModifiedBy").HasDatabaseName("IX_T_SubmissionGL_ModifiedBy");
                 b.ToTable("T_SubmissionGL", (string)null);
             });
 
@@ -130,7 +135,9 @@ namespace CasePortal.Api.Migrations
                 b.Property<string>("PasswordHash").IsRequired().HasMaxLength(500).HasColumnType("nvarchar(500)");
                 b.HasKey("Id");
                 b.HasIndex("CompanyId");
+                b.HasIndex("CreatedBy").HasDatabaseName("IX_T_User_CreatedBy");
                 b.HasIndex("Email").IsUnique();
+                b.HasIndex("ModifiedBy").HasDatabaseName("IX_T_User_ModifiedBy");
                 b.HasIndex("RoleId");
                 b.ToTable("T_User", (string)null);
             });
@@ -142,6 +149,54 @@ namespace CasePortal.Api.Migrations
                     .HasForeignKey("MembershipId")
                     .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired();
+
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("CreatedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_SubmissionGL_T_User_CreatedBy");
+
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("ModifiedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_SubmissionGL_T_User_ModifiedBy");
+            });
+
+            modelBuilder.Entity("CasePortal.Api.Models.Company", b =>
+            {
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("CreatedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_Company_T_User_CreatedBy");
+
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("ModifiedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_Company_T_User_ModifiedBy");
+            });
+
+            modelBuilder.Entity("CasePortal.Api.Models.Membership", b =>
+            {
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("CreatedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_Membership_T_User_CreatedBy");
+
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("ModifiedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_Membership_T_User_ModifiedBy");
             });
 
             modelBuilder.Entity("CasePortal.Api.Models.User", b =>
@@ -156,6 +211,20 @@ namespace CasePortal.Api.Migrations
                     .HasForeignKey("RoleId")
                     .OnDelete(DeleteBehavior.Restrict)
                     .IsRequired();
+
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("CreatedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_User_T_User_CreatedBy");
+
+                b.HasOne("CasePortal.Api.Models.User", null)
+                    .WithMany()
+                    .HasForeignKey("ModifiedBy")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired()
+                    .HasConstraintName("FK_T_User_T_User_ModifiedBy");
 
                 b.Navigation("Role");
             });
