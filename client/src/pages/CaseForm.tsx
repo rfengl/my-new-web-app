@@ -8,6 +8,7 @@ import { createSubmissionFormStore } from '../store/submissionFormStore'
 import { api } from '../api'
 import type { Membership } from '../types/membership'
 import type { SubmissionGL } from '../types/submissionGL'
+import { GL_TYPES, SUBMISSION_STATUSES, getDisplayStatus, glTypeLabel } from '../utils/submissionStatus'
 import ZustandInput from '../components/ZustandInput'
 import ZustandSelect from '../components/ZustandSelect'
 import ZustandTextarea from '../components/ZustandTextarea'
@@ -40,6 +41,8 @@ export default function CaseForm() {
   const saveError       = useStore(store, (s) => s.saveError)
   const subSaving    = useStore(subStore, (s) => s.saving)
   const subSaveError = useStore(subStore, (s) => s.saveError)
+  const subStatus    = useStore(subStore, (s) => s.submissionStatus)
+  const subGlType    = useStore(subStore, (s) => s.glType)
   const loadingCase  = useStore(store, (s) => s.loadingCase)
   const notFound        = useStore(store, (s) => s.notFound)
 
@@ -372,14 +375,10 @@ export default function CaseForm() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
-                    <ZustandSelect store={subStore} field="submissionStatus" className={selectClass}>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">GL Type</label>
+                    <ZustandSelect store={subStore} field="glType" className={selectClass}>
                       <option value="">— Select —</option>
-                      <option>Pending</option>
-                      <option>Submitted</option>
-                      <option>Approved</option>
-                      <option>Rejected</option>
-                      <option>Cancelled</option>
+                      {GL_TYPES.map(t => <option key={t.value} value={t.value}>{t.value} — {t.label}</option>)}
                     </ZustandSelect>
                   </div>
                   <div>
@@ -395,16 +394,91 @@ export default function CaseForm() {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
+                  <ZustandSelect store={subStore} field="submissionStatus" className={selectClass}>
+                    <option value="">— Select —</option>
+                    {SUBMISSION_STATUSES.map(s => <option key={s}>{s}</option>)}
+                  </ZustandSelect>
+                  {subStatus && subGlType && (
+                    <p className="mt-1.5 text-xs text-slate-500 flex items-center gap-1.5">
+                      <span>Displays as:</span>
+                      <span className="font-semibold text-primary-700">
+                        {getDisplayStatus(subStatus, Number(subGlType))}
+                      </span>
+                      {getDisplayStatus(subStatus, Number(subGlType)) !== subStatus && (
+                        <span className="text-[10px] bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded font-medium uppercase tracking-wide">
+                          {glTypeLabel(Number(subGlType))}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              </fieldset>
+
+              <fieldset className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+                <legend className="text-sm font-semibold text-slate-700 px-1 -mt-3 mb-2">
+                  Patient &amp; Admission
+                </legend>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">GL Type</label>
-                    <ZustandInput store={subStore} field="glType" type="number" min={0} step={1}
-                      placeholder="0" className={inputClass} />
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Doctor Name</label>
+                    <ZustandInput store={subStore} field="doctorName" type="text"
+                      placeholder="Attending physician" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Doctor Specialty</label>
+                    <ZustandInput store={subStore} field="doctorSpecialty" type="text"
+                      placeholder="e.g. Cardiology" className={inputClass} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Provisional Diagnosis</label>
+                  <ZustandTextarea store={subStore} field="provisionalDiagnosis"
+                    placeholder="Describe the provisional diagnosis" rows={2} className={inputClass} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">ICD Code</label>
+                    <ZustandInput store={subStore} field="icdCode" type="text"
+                      placeholder="e.g. J18.9" className={inputClass} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">MRN</label>
                     <ZustandInput store={subStore} field="mrn" type="text"
                       placeholder="Medical record number" className={inputClass} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Admission</label>
+                    <ZustandDateInput store={subStore} field="dateOfAdmission" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Date of Discharge</label>
+                    <ZustandDateInput store={subStore} field="dateOfDischarge" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Billing Date</label>
+                    <ZustandDateInput store={subStore} field="billingDate" className={inputClass} />
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+                <legend className="text-sm font-semibold text-slate-700 px-1 -mt-3 mb-2">
+                  Financial
+                </legend>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Estimated Cost (MYR)</label>
+                    <ZustandInput store={subStore} field="estimatedCost" type="number"
+                      min={0} step={0.01} placeholder="0.00" className={inputClass} />
                   </div>
                 </div>
               </fieldset>

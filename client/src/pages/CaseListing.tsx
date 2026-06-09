@@ -62,7 +62,7 @@ export default function CaseListing() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => navigate('/api-docs')}
+<button onClick={() => navigate('/api-docs')}
               className="text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-md px-3 py-1.5 transition-colors flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

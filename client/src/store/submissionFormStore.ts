@@ -2,7 +2,8 @@ import { createStore } from 'zustand/vanilla'
 import { api } from '../api'
 import type { SubmissionGL } from '../types/submissionGL'
 
-export type SubmissionFormFields = Omit<SubmissionGL, 'id' | 'membershipId' | 'createdDate'>
+// glType is stored as string in the form (ZustandSelect always gives strings); converted at API boundaries
+export type SubmissionFormFields = Omit<SubmissionGL, 'id' | 'membershipId' | 'createdDate' | 'displayStatus'>
 
 export interface SubmissionFormState extends SubmissionFormFields {
   submissionId: string   // empty = creating new; set = updating existing
@@ -15,10 +16,18 @@ export interface SubmissionFormState extends SubmissionFormFields {
 }
 
 const EMPTY: SubmissionFormFields = {
-  submissionStatus: '',
-  requestType: '',
-  glType: 0,
-  mrn: '',
+  submissionStatus:     '',
+  requestType:          '',
+  glType:               0,
+  mrn:                  '',
+  billingDate:          '',
+  dateOfAdmission:      '',
+  dateOfDischarge:      '',
+  doctorName:           '',
+  doctorSpecialty:      '',
+  provisionalDiagnosis: '',
+  icdCode:              '',
+  estimatedCost:        0,
 }
 
 export function createSubmissionFormStore() {
@@ -32,16 +41,32 @@ export function createSubmissionFormStore() {
 
     populate: (s) =>
       set({
-        submissionId:     s.id,
-        submissionStatus: s.submissionStatus,
-        requestType:      s.requestType,
-        glType:           s.glType,
-        mrn:              s.mrn,
+        submissionId:         s.id,
+        submissionStatus:     s.submissionStatus,
+        requestType:          s.requestType,
+        glType:               s.glType,
+        mrn:                  s.mrn,
+        billingDate:          s.billingDate,
+        dateOfAdmission:      s.dateOfAdmission,
+        dateOfDischarge:      s.dateOfDischarge,
+        doctorName:           s.doctorName,
+        doctorSpecialty:      s.doctorSpecialty,
+        provisionalDiagnosis: s.provisionalDiagnosis,
+        icdCode:              s.icdCode,
+        estimatedCost:        s.estimatedCost,
       }),
 
     save: async (membershipId) => {
-      const { submissionId, submissionStatus, requestType, glType, mrn } = get()
-      const payload = { submissionStatus, requestType, glType, mrn }
+      const {
+        submissionId, submissionStatus, requestType, glType, mrn,
+        billingDate, dateOfAdmission, dateOfDischarge,
+        doctorName, doctorSpecialty, provisionalDiagnosis, icdCode, estimatedCost,
+      } = get()
+      const payload = {
+        submissionStatus, requestType, glType, mrn,
+        billingDate, dateOfAdmission, dateOfDischarge,
+        doctorName, doctorSpecialty, provisionalDiagnosis, icdCode, estimatedCost,
+      }
       if (submissionId) {
         return api.put<SubmissionGL>(`/api/submissions/${submissionId}`, payload)
       }
