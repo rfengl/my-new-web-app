@@ -2,8 +2,8 @@ export type Membership = {
   id: string
   date?: string
   name: string
-  nric: string
-  passportNo: string
+  idType: 'NRIC' | 'Passport'
+  idNo: string
   insurance: string
   company: string
   policyNo: string

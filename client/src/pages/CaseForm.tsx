@@ -189,16 +189,18 @@ export default function CaseForm() {
                     placeholder="Full name" className={inputClass} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">NRIC</label>
-                    <ZustandInput store={store} field="nric" type="text"
-                      placeholder="e.g. 901231-10-1234" className={inputClass} />
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">ID Type</label>
+                    <ZustandSelect store={store} field="idType" className={selectClass}>
+                      <option value="NRIC">NRIC</option>
+                      <option value="Passport">Passport</option>
+                    </ZustandSelect>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Passport No</label>
-                    <ZustandInput store={store} field="passportNo" type="text"
-                      placeholder="Passport number" className={inputClass} />
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">ID No</label>
+                    <ZustandInput store={store} field="idNo" type="text"
+                      placeholder="Identity number" className={inputClass} />
                   </div>
                 </div>
               </fieldset>

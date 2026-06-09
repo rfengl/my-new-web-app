@@ -15,8 +15,8 @@ export interface MembershipFormState extends MembershipFormFields {
 
 const EMPTY: MembershipFormFields = {
   name: '',
-  nric: '',
-  passportNo: '',
+  idType: 'NRIC',
+  idNo: '',
   insurance: '',
   company: '',
   policyNo: '',
@@ -44,8 +44,8 @@ export function createMembershipFormStore() {
     populate: (c) =>
       set({
         name:                  c.name,
-        nric:                  c.nric,
-        passportNo:            c.passportNo,
+        idType:                c.idType,
+        idNo:                  c.idNo,
         insurance:             c.insurance,
         company:               c.company,
         policyNo:              c.policyNo,

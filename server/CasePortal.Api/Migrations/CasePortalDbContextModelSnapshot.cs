@@ -50,8 +50,8 @@ namespace CasePortal.Api.Migrations
                 b.Property<decimal>("Deductible").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
                 b.Property<string>("Insurance").IsRequired().HasMaxLength(100).HasColumnType("nvarchar(100)").HasDefaultValue("");
                 b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                b.Property<string>("Nric").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("");
-                b.Property<string>("PassportNo").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("");
+                b.Property<string>("IdType").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("NRIC");
+                b.Property<string>("IdNo").IsRequired().HasMaxLength(30).HasColumnType("nvarchar(30)").HasDefaultValue("");
                 b.Property<DateOnly?>("PolicyEffDate").HasColumnType("date");
                 b.Property<DateOnly?>("PolicyExpDate").HasColumnType("date");
                 b.Property<DateOnly?>("PolicyLapseDate").HasColumnType("date");

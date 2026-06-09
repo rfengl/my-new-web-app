@@ -7,8 +7,8 @@ public class CreateMembershipRequest
     [Required, MaxLength(200)]
     public string  Name                  { get; set; } = string.Empty;
 
-    public string  Nric                  { get; set; } = string.Empty;
-    public string  PassportNo            { get; set; } = string.Empty;
+    public string  IdType                { get; set; } = "NRIC";
+    public string  IdNo                  { get; set; } = string.Empty;
     public string  Insurance             { get; set; } = string.Empty;
     public string  Company               { get; set; } = string.Empty;
     public string  PolicyNo              { get; set; } = string.Empty;

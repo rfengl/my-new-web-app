@@ -19,8 +19,8 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         {
             Date                  = DateOnly.FromDateTime(DateTime.UtcNow),
             Name                  = req.Name,
-            Nric                  = req.Nric,
-            PassportNo            = req.PassportNo,
+            IdType                = req.IdType,
+            IdNo                  = req.IdNo,
             Insurance             = req.Insurance,
             Company               = req.Company,
             PolicyNo              = req.PolicyNo,
@@ -45,8 +45,8 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         if (m is null) return null;
 
         if (req.Name                  is not null) m.Name                  = req.Name;
-        if (req.Nric                  is not null) m.Nric                  = req.Nric;
-        if (req.PassportNo            is not null) m.PassportNo            = req.PassportNo;
+        if (req.IdType                is not null) m.IdType                = req.IdType;
+        if (req.IdNo                  is not null) m.IdNo                  = req.IdNo;
         if (req.Insurance             is not null) m.Insurance             = req.Insurance;
         if (req.Company               is not null) m.Company               = req.Company;
         if (req.PolicyNo              is not null) m.PolicyNo              = req.PolicyNo;

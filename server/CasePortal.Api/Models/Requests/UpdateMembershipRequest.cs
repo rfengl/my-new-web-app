@@ -6,8 +6,8 @@ public class UpdateMembershipRequest
 {
     [MaxLength(200)]
     public string?  Name                  { get; set; }
-    public string?  Nric                  { get; set; }
-    public string?  PassportNo            { get; set; }
+    public string?  IdType                { get; set; }
+    public string?  IdNo                  { get; set; }
     public string?  Insurance             { get; set; }
     public string?  Company               { get; set; }
     public string?  PolicyNo              { get; set; }

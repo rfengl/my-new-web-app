@@ -67,7 +67,7 @@ public class MembershipsController(IMembershipService memberships, IIdEncryption
     private MembershipResponse ToResponse(Models.Membership m) => new(
         enc.Encrypt(m.Id),
         dates.Format(m.Date),
-        m.Name, m.Nric, m.PassportNo,
+        m.Name, m.IdType, m.IdNo,
         m.Insurance, m.Company, m.PolicyNo,
         m.RbEntitlement, m.CoPayment, m.CoInsurance, m.Deductible,
         dates.Format(m.PolicyEffDate),

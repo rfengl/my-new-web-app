@@ -121,7 +121,7 @@ export default function CaseListing() {
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Policy No</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">NRIC</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">ID No</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Eff. Date</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Created</th>
@@ -147,7 +147,10 @@ export default function CaseListing() {
                 <tr key={m.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-3.5 font-mono text-slate-600 text-xs">{m.policyNo || '—'}</td>
                   <td className="px-5 py-3.5 text-slate-800 font-medium">{m.name}</td>
-                  <td className="px-5 py-3.5 font-mono text-slate-500 text-xs">{m.nric || '—'}</td>
+                  <td className="px-5 py-3.5 text-slate-500 text-xs">
+                    <span className="font-mono">{m.idNo || '—'}</span>
+                    {m.idNo && <span className="ml-1.5 text-[10px] text-slate-400 uppercase">{m.idType}</span>}
+                  </td>
                   <td className="px-5 py-3.5 text-slate-500 text-xs">{formatDate(m.policyEffDate)}</td>
                   <td className="px-5 py-3.5">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${STATUS_STYLES[m.status] ?? 'bg-slate-100 text-slate-500'}`}>

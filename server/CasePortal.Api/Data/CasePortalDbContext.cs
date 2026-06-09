@@ -31,8 +31,8 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(m => m.Id)                    .ValueGeneratedOnAdd();
             e.Property(m => m.Date)                  .HasColumnType("date");
             e.Property(m => m.Name)                  .HasMaxLength(200).IsRequired();
-            e.Property(m => m.Nric)                  .HasMaxLength(20);
-            e.Property(m => m.PassportNo)             .HasMaxLength(20);
+            e.Property(m => m.IdType)                 .HasMaxLength(20).HasDefaultValue("NRIC");
+            e.Property(m => m.IdNo)                   .HasMaxLength(30);
             e.Property(m => m.Insurance)              .HasMaxLength(100);
             e.Property(m => m.Company)                .HasMaxLength(200);
             e.Property(m => m.PolicyNo)               .HasMaxLength(50);
