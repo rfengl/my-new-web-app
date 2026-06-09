@@ -32,7 +32,10 @@ public class SubmissionGL
     public string   ProvisionalDiagnosis { get; set; } = string.Empty;
     public string   IcdCode              { get; set; } = string.Empty;
     public decimal  EstimatedCost        { get; set; }
-    public DateOnly CreatedDate          { get; set; }
+    public DateTime CreatedDate          { get; set; }
+    public int      CreatedBy            { get; set; }
+    public DateTime ModifiedDate         { get; set; }
+    public int      ModifiedBy           { get; set; }
 
     // 1 = Client, 2 = Hospital
     public string DisplayStatus => GlType == 2

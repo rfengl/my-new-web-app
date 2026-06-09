@@ -30,7 +30,10 @@ namespace CasePortal.Api.Migrations
                     .HasColumnType("int")
                     .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<string>("Code").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
-                b.Property<DateOnly>("CreatedDate").HasColumnType("date");
+                b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
+                b.Property<int>("CreatedBy").HasColumnType("int");
+                b.Property<DateTime>("ModifiedDate").HasColumnType("datetime2");
+                b.Property<int>("ModifiedBy").HasColumnType("int");
                 b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
                 b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
                 b.HasKey("Id");
@@ -43,10 +46,13 @@ namespace CasePortal.Api.Migrations
                     .ValueGeneratedOnAdd()
                     .HasColumnType("int")
                     .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
+                b.Property<int>("CreatedBy").HasColumnType("int");
+                b.Property<DateTime>("ModifiedDate").HasColumnType("datetime2");
+                b.Property<int>("ModifiedBy").HasColumnType("int");
                 b.Property<string>("CoInsurance").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)").HasDefaultValue("");
                 b.Property<decimal>("CoPayment").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
                 b.Property<string>("Company").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasDefaultValue("");
-                b.Property<DateOnly>("Date").HasColumnType("date");
                 b.Property<decimal>("Deductible").HasColumnType("decimal(18,2)").HasDefaultValue(0m);
                 b.Property<string>("Insurance").IsRequired().HasMaxLength(100).HasColumnType("nvarchar(100)").HasDefaultValue("");
                 b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
@@ -71,7 +77,10 @@ namespace CasePortal.Api.Migrations
                     .HasColumnType("int")
                     .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<DateOnly?>("BillingDate").HasColumnType("date");
-                b.Property<DateOnly>("CreatedDate").HasColumnType("date");
+                b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
+                b.Property<int>("CreatedBy").HasColumnType("int");
+                b.Property<DateTime>("ModifiedDate").HasColumnType("datetime2");
+                b.Property<int>("ModifiedBy").HasColumnType("int");
                 b.Property<DateOnly?>("DateOfAdmission").HasColumnType("date");
                 b.Property<DateOnly?>("DateOfDischarge").HasColumnType("date");
                 b.Property<string>("DoctorName").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasDefaultValue("");
@@ -96,7 +105,10 @@ namespace CasePortal.Api.Migrations
                     .HasColumnType("int")
                     .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
                 b.Property<int?>("CompanyId").HasColumnType("int");
-                b.Property<DateOnly>("CreatedDate").HasColumnType("date");
+                b.Property<DateTime>("CreatedDate").HasColumnType("datetime2");
+                b.Property<int>("CreatedBy").HasColumnType("int");
+                b.Property<DateTime>("ModifiedDate").HasColumnType("datetime2");
+                b.Property<int>("ModifiedBy").HasColumnType("int");
                 b.Property<string>("Email").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
                 b.Property<bool>("IsActive").HasColumnType("bit").HasDefaultValue(true);
                 b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");

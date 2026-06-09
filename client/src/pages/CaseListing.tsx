@@ -157,7 +157,7 @@ export default function CaseListing() {
                       {m.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-400 text-xs">{formatDate(m.date)}</td>
+                  <td className="px-5 py-3.5 text-slate-400 text-xs">{formatDate(m.createdDate)}</td>
                   <td className="px-5 py-3.5 text-right">
                     <div className="inline-flex items-center gap-2">
                       <button

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CasePortal.Api.Models.Requests;
 using CasePortal.Api.Models.Responses;
 using CasePortal.Api.Services;
@@ -11,6 +12,9 @@ namespace CasePortal.Api.Controllers;
 [Authorize]
 public class MembershipsController(IMembershipService memberships, IIdEncryptionService enc, IDateFormatter dates) : ControllerBase
 {
+    private int CurrentUserId =>
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -34,7 +38,7 @@ public class MembershipsController(IMembershipService memberships, IIdEncryption
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMembershipRequest request)
     {
-        var created  = await memberships.CreateAsync(request);
+        var created  = await memberships.CreateAsync(request, CurrentUserId);
         var response = ToResponse(created);
         return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
@@ -45,7 +49,7 @@ public class MembershipsController(IMembershipService memberships, IIdEncryption
         if (!TryDecrypt(id, out var rawId))
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
-        var updated = await memberships.UpdateAsync(rawId, request);
+        var updated = await memberships.UpdateAsync(rawId, request, CurrentUserId);
         if (updated is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
@@ -66,7 +70,7 @@ public class MembershipsController(IMembershipService memberships, IIdEncryption
 
     private MembershipResponse ToResponse(Models.Membership m) => new(
         enc.Encrypt(m.Id),
-        dates.Format(m.Date),
+        dates.Format(m.CreatedDate),
         m.Name, m.IdType, m.IdNo,
         m.Insurance, m.Company, m.PolicyNo,
         m.RbEntitlement, m.CoPayment, m.CoInsurance, m.Deductible,

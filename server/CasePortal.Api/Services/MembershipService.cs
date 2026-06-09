@@ -8,16 +8,20 @@ namespace CasePortal.Api.Services;
 public class MembershipService(CasePortalDbContext db) : IMembershipService
 {
     public async Task<IEnumerable<Membership>> GetAllAsync()
-        => await db.Memberships.OrderByDescending(m => m.Date).ToListAsync();
+        => await db.Memberships.OrderByDescending(m => m.CreatedDate).ToListAsync();
 
     public async Task<Membership?> GetByIdAsync(int id)
         => await db.Memberships.FindAsync(id);
 
-    public async Task<Membership> CreateAsync(CreateMembershipRequest req)
+    public async Task<Membership> CreateAsync(CreateMembershipRequest req, int userId)
     {
+        var now = DateTime.UtcNow;
         var m = new Membership
         {
-            Date                  = DateOnly.FromDateTime(DateTime.UtcNow),
+            CreatedDate           = now,
+            CreatedBy             = userId,
+            ModifiedDate          = now,
+            ModifiedBy            = userId,
             Name                  = req.Name,
             IdType                = req.IdType,
             IdNo                  = req.IdNo,
@@ -39,7 +43,7 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         return m;
     }
 
-    public async Task<Membership?> UpdateAsync(int id, UpdateMembershipRequest req)
+    public async Task<Membership?> UpdateAsync(int id, UpdateMembershipRequest req, int userId)
     {
         var m = await db.Memberships.FindAsync(id);
         if (m is null) return null;
@@ -59,6 +63,9 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         if (req.PolicyLapseDate       is not null) m.PolicyLapseDate       = ParseDate(req.PolicyLapseDate);
         if (req.Status                is not null) m.Status                = req.Status;
         if (req.UnderwritingExclusion is not null) m.UnderwritingExclusion = req.UnderwritingExclusion;
+
+        m.ModifiedDate = DateTime.UtcNow;
+        m.ModifiedBy   = userId;
 
         await db.SaveChangesAsync();
         return m;

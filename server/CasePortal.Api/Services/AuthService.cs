@@ -24,9 +24,10 @@ public class AuthService(CasePortalDbContext db, IConfiguration config) : IAuthS
             issuer:             config["Jwt:Issuer"],
             audience:           config["Jwt:Audience"],
             claims:             [
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name,  user.Name),
-                new Claim(ClaimTypes.Role,  user.Role),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email,          user.Email),
+                new Claim(ClaimTypes.Name,           user.Name),
+                new Claim(ClaimTypes.Role,           user.Role),
             ],
             expires:            DateTime.UtcNow.AddSeconds(86400),
             signingCredentials: creds);

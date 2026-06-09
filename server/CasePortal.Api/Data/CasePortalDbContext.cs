@@ -18,10 +18,13 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
         {
             e.ToTable("T_Company");
             e.HasKey(c => c.Id);
-            e.Property(c => c.Id)         .ValueGeneratedOnAdd();
+            e.Property(c => c.Id)          .ValueGeneratedOnAdd();
             e.Property(c => c.Name)        .HasMaxLength(200).IsRequired();
             e.Property(c => c.Code)        .HasMaxLength(50);
-            e.Property(c => c.CreatedDate) .HasColumnType("date");
+            e.Property(c => c.CreatedDate) .HasColumnType("datetime2");
+            e.Property(c => c.CreatedBy)   .HasColumnType("int");
+            e.Property(c => c.ModifiedDate).HasColumnType("datetime2");
+            e.Property(c => c.ModifiedBy)  .HasColumnType("int");
         });
 
         model.Entity<Membership>(e =>
@@ -29,8 +32,11 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.ToTable("T_Membership");
             e.HasKey(m => m.Id);
             e.Property(m => m.Id)                    .ValueGeneratedOnAdd();
-            e.Property(m => m.Date)                  .HasColumnType("date");
-            e.Property(m => m.Name)                  .HasMaxLength(200).IsRequired();
+            e.Property(m => m.CreatedDate)            .HasColumnType("datetime2");
+            e.Property(m => m.CreatedBy)              .HasColumnType("int");
+            e.Property(m => m.ModifiedDate)           .HasColumnType("datetime2");
+            e.Property(m => m.ModifiedBy)             .HasColumnType("int");
+            e.Property(m => m.Name)                   .HasMaxLength(200).IsRequired();
             e.Property(m => m.IdType)                 .HasMaxLength(20).HasDefaultValue("NRIC");
             e.Property(m => m.IdNo)                   .HasMaxLength(30);
             e.Property(m => m.Insurance)              .HasMaxLength(100);
@@ -52,11 +58,14 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.ToTable("T_User");
             e.HasKey(u => u.Id);
             e.Property(u => u.Id)           .ValueGeneratedOnAdd();
-            e.Property(u => u.Email)         .HasMaxLength(200).IsRequired();
-            e.Property(u => u.PasswordHash)  .HasMaxLength(500).IsRequired();
-            e.Property(u => u.Name)          .HasMaxLength(200).IsRequired();
-            e.Property(u => u.Role)          .HasMaxLength(50).HasDefaultValue("User");
-            e.Property(u => u.CreatedDate)   .HasColumnType("date");
+            e.Property(u => u.Email)        .HasMaxLength(200).IsRequired();
+            e.Property(u => u.PasswordHash) .HasMaxLength(500).IsRequired();
+            e.Property(u => u.Name)         .HasMaxLength(200).IsRequired();
+            e.Property(u => u.Role)         .HasMaxLength(50).HasDefaultValue("User");
+            e.Property(u => u.CreatedDate)  .HasColumnType("datetime2");
+            e.Property(u => u.CreatedBy)    .HasColumnType("int");
+            e.Property(u => u.ModifiedDate) .HasColumnType("datetime2");
+            e.Property(u => u.ModifiedBy)   .HasColumnType("int");
             e.HasIndex(u => u.Email).IsUnique();
             e.HasOne<Company>()
              .WithMany()
@@ -81,7 +90,10 @@ public class CasePortalDbContext(DbContextOptions<CasePortalDbContext> options) 
             e.Property(s => s.ProvisionalDiagnosis)   .HasMaxLength(500);
             e.Property(s => s.IcdCode)                .HasMaxLength(20);
             e.Property(s => s.EstimatedCost)          .HasColumnType("decimal(18,2)");
-            e.Property(s => s.CreatedDate)            .HasColumnType("date");
+            e.Property(s => s.CreatedDate)            .HasColumnType("datetime2");
+            e.Property(s => s.CreatedBy)              .HasColumnType("int");
+            e.Property(s => s.ModifiedDate)           .HasColumnType("datetime2");
+            e.Property(s => s.ModifiedBy)             .HasColumnType("int");
             e.Ignore(s => s.DisplayStatus);
             e.HasOne<Membership>()
              .WithMany()

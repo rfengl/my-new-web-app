@@ -8,15 +8,20 @@ public class DatabaseSeeder(CasePortalDbContext db)
 {
     public async Task SeedAsync()
     {
+        var now = DateTime.UtcNow;
+
         Company company;
         if (!await db.Companies.AnyAsync())
         {
             company = new Company
             {
-                Name        = "Default Company",
-                Code        = "DEFAULT",
-                IsActive    = true,
-                CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Name         = "Default Company",
+                Code         = "DEFAULT",
+                IsActive     = true,
+                CreatedDate  = now,
+                CreatedBy    = 0,
+                ModifiedDate = now,
+                ModifiedBy   = 0,
             };
             db.Companies.Add(company);
             await db.SaveChangesAsync();
@@ -36,7 +41,10 @@ public class DatabaseSeeder(CasePortalDbContext db)
                 Role         = "Admin",
                 IsActive     = true,
                 CompanyId    = company.Id,
-                CreatedDate  = DateOnly.FromDateTime(DateTime.UtcNow),
+                CreatedDate  = now,
+                CreatedBy    = 0,
+                ModifiedDate = now,
+                ModifiedBy   = 0,
             });
             await db.SaveChangesAsync();
         }

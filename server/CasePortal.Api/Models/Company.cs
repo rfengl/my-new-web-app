@@ -6,5 +6,8 @@ public class Company
     public string   Name        { get; set; } = "";
     public string   Code        { get; set; } = "";
     public bool     IsActive    { get; set; } = true;
-    public DateOnly CreatedDate { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public int      CreatedBy   { get; set; }
+    public DateTime ModifiedDate { get; set; }
+    public int      ModifiedBy   { get; set; }
 }

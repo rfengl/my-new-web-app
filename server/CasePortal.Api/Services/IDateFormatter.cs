@@ -4,4 +4,6 @@ public interface IDateFormatter
 {
     string Format(DateOnly date);
     string Format(DateOnly? date);
+    string Format(DateTime date);
+    string Format(DateTime? date);
 }

@@ -7,6 +7,8 @@ public class DateFormatter : IDateFormatter
     public DateFormatter(IConfiguration config)
         => _format = config["Formatting:DateFormat"] ?? "yyyy-MM-dd";
 
-    public string Format(DateOnly date)  => date.ToString(_format);
-    public string Format(DateOnly? date) => date?.ToString(_format) ?? "";
+    public string Format(DateOnly date)   => date.ToString(_format);
+    public string Format(DateOnly? date)  => date?.ToString(_format) ?? "";
+    public string Format(DateTime date)   => date.ToString(_format);
+    public string Format(DateTime? date)  => date?.ToString(_format) ?? "";
 }

@@ -2,7 +2,7 @@ namespace CasePortal.Api.Models.Responses;
 
 public record MembershipResponse(
     string   Id,
-    string   Date,
+    string   CreatedDate,
     string   Name,
     string   IdType,
     string   IdNo,

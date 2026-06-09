@@ -1,7 +1,7 @@
 import { createStore } from 'zustand/vanilla'
 import type { Membership } from '../types/membership'
 
-export type MembershipFormFields = Omit<Membership, 'id' | 'date'>
+export type MembershipFormFields = Omit<Membership, 'id' | 'createdDate'>
 
 export interface MembershipFormState extends MembershipFormFields {
   saving: boolean

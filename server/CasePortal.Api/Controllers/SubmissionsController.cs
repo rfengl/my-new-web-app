@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CasePortal.Api.Models.Requests;
 using CasePortal.Api.Models.Responses;
 using CasePortal.Api.Services;
@@ -11,6 +12,9 @@ namespace CasePortal.Api.Controllers;
 [Authorize]
 public class SubmissionsController(ISubmissionService submissions, IIdEncryptionService enc, IDateFormatter dates) : ControllerBase
 {
+    private int CurrentUserId =>
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
@@ -30,7 +34,7 @@ public class SubmissionsController(ISubmissionService submissions, IIdEncryption
         if (!TryDecrypt(request.MembershipId, out var membershipId))
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
-        var created = await submissions.CreateAsync(membershipId, request);
+        var created = await submissions.CreateAsync(membershipId, request, CurrentUserId);
         if (created is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Membership not found." });
 
@@ -44,7 +48,7 @@ public class SubmissionsController(ISubmissionService submissions, IIdEncryption
         if (!TryDecrypt(id, out var rawId))
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
 
-        var updated = await submissions.UpdateAsync(rawId, request);
+        var updated = await submissions.UpdateAsync(rawId, request, CurrentUserId);
         if (updated is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Submission not found." });
 

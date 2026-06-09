@@ -1,6 +1,6 @@
 export type Membership = {
   id: string
-  date?: string
+  createdDate?: string
   name: string
   idType: 'NRIC' | 'Passport'
   idNo: string

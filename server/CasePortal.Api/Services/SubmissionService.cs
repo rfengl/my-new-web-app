@@ -10,11 +10,12 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
     public async Task<SubmissionGL?> GetByIdAsync(int id)
         => await db.SubmissionsGL.FindAsync(id);
 
-    public async Task<SubmissionGL?> CreateAsync(int membershipId, CreateSubmissionRequest req)
+    public async Task<SubmissionGL?> CreateAsync(int membershipId, CreateSubmissionRequest req, int userId)
     {
         var membership = await db.Memberships.FindAsync(membershipId);
         if (membership is null) return null;
 
+        var now = DateTime.UtcNow;
         var s = new SubmissionGL
         {
             MembershipId         = membershipId,
@@ -30,7 +31,10 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
             ProvisionalDiagnosis = req.ProvisionalDiagnosis,
             IcdCode              = req.IcdCode,
             EstimatedCost        = req.EstimatedCost,
-            CreatedDate          = DateOnly.FromDateTime(DateTime.UtcNow),
+            CreatedDate          = now,
+            CreatedBy            = userId,
+            ModifiedDate         = now,
+            ModifiedBy           = userId,
         };
 
         db.SubmissionsGL.Add(s);
@@ -40,7 +44,7 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
         return s;
     }
 
-    public async Task<SubmissionGL?> UpdateAsync(int id, UpdateSubmissionRequest req)
+    public async Task<SubmissionGL?> UpdateAsync(int id, UpdateSubmissionRequest req, int userId)
     {
         var s = await db.SubmissionsGL.FindAsync(id);
         if (s is null) return null;
@@ -57,6 +61,9 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
         if (req.ProvisionalDiagnosis is not null) s.ProvisionalDiagnosis = req.ProvisionalDiagnosis;
         if (req.IcdCode              is not null) s.IcdCode              = req.IcdCode;
         if (req.EstimatedCost        is not null) s.EstimatedCost        = req.EstimatedCost.Value;
+
+        s.ModifiedDate = DateTime.UtcNow;
+        s.ModifiedBy   = userId;
 
         await db.SaveChangesAsync();
         return s;
