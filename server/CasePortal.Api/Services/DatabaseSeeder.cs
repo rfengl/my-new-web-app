@@ -16,7 +16,7 @@ public class DatabaseSeeder(CasePortalDbContext db)
                 Name        = "Default Company",
                 Code        = "DEFAULT",
                 IsActive    = true,
-                CreatedDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                CreatedDate = DateOnly.FromDateTime(DateTime.UtcNow),
             };
             db.Companies.Add(company);
             await db.SaveChangesAsync();
@@ -36,7 +36,7 @@ public class DatabaseSeeder(CasePortalDbContext db)
                 Role         = "Admin",
                 IsActive     = true,
                 CompanyId    = company.Id,
-                CreatedDate  = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                CreatedDate  = DateOnly.FromDateTime(DateTime.UtcNow),
             });
             await db.SaveChangesAsync();
         }

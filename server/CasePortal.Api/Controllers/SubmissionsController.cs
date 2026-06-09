@@ -67,9 +67,11 @@ public class SubmissionsController(ISubmissionService submissions, IIdEncryption
         enc.Encrypt(s.Id),
         enc.Encrypt(s.MembershipId),
         s.SubmissionStatus, s.RequestType, s.GlType, s.DisplayStatus, s.Mrn,
-        s.BillingDate, s.DateOfAdmission, s.DateOfDischarge,
+        s.BillingDate?.ToString("yyyy-MM-dd")    ?? "",
+        s.DateOfAdmission?.ToString("yyyy-MM-dd") ?? "",
+        s.DateOfDischarge?.ToString("yyyy-MM-dd") ?? "",
         s.DoctorName, s.DoctorSpecialty, s.ProvisionalDiagnosis,
-        s.IcdCode, s.EstimatedCost, s.CreatedDate
+        s.IcdCode, s.EstimatedCost, s.CreatedDate.ToString("yyyy-MM-dd")
     );
 
     private bool TryDecrypt(string token, out int id)

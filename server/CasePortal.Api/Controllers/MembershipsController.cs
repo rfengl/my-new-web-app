@@ -66,10 +66,13 @@ public class MembershipsController(IMembershipService memberships, IIdEncryption
 
     private MembershipResponse ToResponse(Models.Membership m) => new(
         enc.Encrypt(m.Id),
-        m.Date, m.Name, m.Nric, m.PassportNo,
+        m.Date.ToString("yyyy-MM-dd"),
+        m.Name, m.Nric, m.PassportNo,
         m.Insurance, m.Company, m.PolicyNo,
         m.RbEntitlement, m.CoPayment, m.CoInsurance, m.Deductible,
-        m.PolicyEffDate, m.PolicyExpDate, m.PolicyLapseDate,
+        m.PolicyEffDate?.ToString("yyyy-MM-dd")   ?? "",
+        m.PolicyExpDate?.ToString("yyyy-MM-dd")   ?? "",
+        m.PolicyLapseDate?.ToString("yyyy-MM-dd") ?? "",
         m.Status, m.UnderwritingExclusion,
         m.SubmissionId.HasValue ? enc.Encrypt(m.SubmissionId.Value) : null
     );

@@ -22,19 +22,19 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
             RequestType          = req.RequestType,
             GlType               = req.GlType,
             Mrn                  = req.Mrn,
-            BillingDate          = req.BillingDate,
-            DateOfAdmission      = req.DateOfAdmission,
-            DateOfDischarge      = req.DateOfDischarge,
+            BillingDate          = ParseDate(req.BillingDate),
+            DateOfAdmission      = ParseDate(req.DateOfAdmission),
+            DateOfDischarge      = ParseDate(req.DateOfDischarge),
             DoctorName           = req.DoctorName,
             DoctorSpecialty      = req.DoctorSpecialty,
             ProvisionalDiagnosis = req.ProvisionalDiagnosis,
             IcdCode              = req.IcdCode,
             EstimatedCost        = req.EstimatedCost,
-            CreatedDate          = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            CreatedDate          = DateOnly.FromDateTime(DateTime.UtcNow),
         };
 
         db.SubmissionsGL.Add(s);
-        await db.SaveChangesAsync(); // EF assigns s.Id from IDENTITY after this
+        await db.SaveChangesAsync();
         membership.SubmissionId = s.Id;
         await db.SaveChangesAsync();
         return s;
@@ -49,9 +49,9 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
         if (req.RequestType          is not null) s.RequestType          = req.RequestType;
         if (req.GlType               is not null) s.GlType               = req.GlType.Value;
         if (req.Mrn                  is not null) s.Mrn                  = req.Mrn;
-        if (req.BillingDate          is not null) s.BillingDate          = req.BillingDate;
-        if (req.DateOfAdmission      is not null) s.DateOfAdmission      = req.DateOfAdmission;
-        if (req.DateOfDischarge      is not null) s.DateOfDischarge      = req.DateOfDischarge;
+        if (req.BillingDate          is not null) s.BillingDate          = ParseDate(req.BillingDate);
+        if (req.DateOfAdmission      is not null) s.DateOfAdmission      = ParseDate(req.DateOfAdmission);
+        if (req.DateOfDischarge      is not null) s.DateOfDischarge      = ParseDate(req.DateOfDischarge);
         if (req.DoctorName           is not null) s.DoctorName           = req.DoctorName;
         if (req.DoctorSpecialty      is not null) s.DoctorSpecialty      = req.DoctorSpecialty;
         if (req.ProvisionalDiagnosis is not null) s.ProvisionalDiagnosis = req.ProvisionalDiagnosis;
@@ -70,4 +70,7 @@ public class SubmissionService(CasePortalDbContext db) : ISubmissionService
         await db.SaveChangesAsync();
         return true;
     }
+
+    private static DateOnly? ParseDate(string? value) =>
+        DateOnly.TryParse(value, out var d) ? d : null;
 }

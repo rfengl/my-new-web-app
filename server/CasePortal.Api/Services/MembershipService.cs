@@ -17,7 +17,7 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
     {
         var m = new Membership
         {
-            Date                  = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            Date                  = DateOnly.FromDateTime(DateTime.UtcNow),
             Name                  = req.Name,
             Nric                  = req.Nric,
             PassportNo            = req.PassportNo,
@@ -28,9 +28,9 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
             CoPayment             = req.CoPayment,
             CoInsurance           = req.CoInsurance,
             Deductible            = req.Deductible,
-            PolicyEffDate         = req.PolicyEffDate,
-            PolicyExpDate         = req.PolicyExpDate,
-            PolicyLapseDate       = req.PolicyLapseDate,
+            PolicyEffDate         = ParseDate(req.PolicyEffDate),
+            PolicyExpDate         = ParseDate(req.PolicyExpDate),
+            PolicyLapseDate       = ParseDate(req.PolicyLapseDate),
             Status                = req.Status,
             UnderwritingExclusion = req.UnderwritingExclusion,
         };
@@ -54,9 +54,9 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
         if (req.CoPayment             is not null) m.CoPayment             = req.CoPayment.Value;
         if (req.CoInsurance           is not null) m.CoInsurance           = req.CoInsurance;
         if (req.Deductible            is not null) m.Deductible            = req.Deductible.Value;
-        if (req.PolicyEffDate         is not null) m.PolicyEffDate         = req.PolicyEffDate;
-        if (req.PolicyExpDate         is not null) m.PolicyExpDate         = req.PolicyExpDate;
-        if (req.PolicyLapseDate       is not null) m.PolicyLapseDate       = req.PolicyLapseDate;
+        if (req.PolicyEffDate         is not null) m.PolicyEffDate         = ParseDate(req.PolicyEffDate);
+        if (req.PolicyExpDate         is not null) m.PolicyExpDate         = ParseDate(req.PolicyExpDate);
+        if (req.PolicyLapseDate       is not null) m.PolicyLapseDate       = ParseDate(req.PolicyLapseDate);
         if (req.Status                is not null) m.Status                = req.Status;
         if (req.UnderwritingExclusion is not null) m.UnderwritingExclusion = req.UnderwritingExclusion;
 
@@ -82,4 +82,7 @@ public class MembershipService(CasePortalDbContext db) : IMembershipService
             await db.SaveChangesAsync();
         }
     }
+
+    private static DateOnly? ParseDate(string? value) =>
+        DateOnly.TryParse(value, out var d) ? d : null;
 }
