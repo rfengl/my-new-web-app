@@ -12,9 +12,9 @@ namespace CasePortal.Api.Controllers;
 public class SubmissionsController(ISubmissionService submissions) : ControllerBase
 {
     [HttpGet("{id}")]
-    public IActionResult GetById(string id)
+    public async Task<IActionResult> GetById(string id)
     {
-        var s = submissions.GetById(id);
+        var s = await submissions.GetByIdAsync(id);
         if (s is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Submission {id} does not exist." });
 
@@ -22,9 +22,9 @@ public class SubmissionsController(ISubmissionService submissions) : ControllerB
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] CreateSubmissionRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateSubmissionRequest request)
     {
-        var created = submissions.Create(request);
+        var created = await submissions.CreateAsync(request);
         if (created is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {request.MembershipId} does not exist." });
 
@@ -32,9 +32,9 @@ public class SubmissionsController(ISubmissionService submissions) : ControllerB
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(string id, [FromBody] UpdateSubmissionRequest request)
+    public async Task<IActionResult> Update(string id, [FromBody] UpdateSubmissionRequest request)
     {
-        var updated = submissions.Update(id, request);
+        var updated = await submissions.UpdateAsync(id, request);
         if (updated is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Submission {id} does not exist." });
 
@@ -42,9 +42,9 @@ public class SubmissionsController(ISubmissionService submissions) : ControllerB
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(string id)
+    public async Task<IActionResult> Delete(string id)
     {
-        if (!submissions.Delete(id))
+        if (!await submissions.DeleteAsync(id))
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Submission {id} does not exist." });
 
         return NoContent();

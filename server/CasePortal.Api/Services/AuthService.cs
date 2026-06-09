@@ -1,32 +1,33 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CasePortal.Api.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CasePortal.Api.Services;
 
-public class AuthService : IAuthService
+public class AuthService(CasePortalDbContext db, IConfiguration config) : IAuthService
 {
-    private readonly IConfiguration _config;
-
-    // Hardcoded for demo — replace with a real user store / identity provider
-    private const string DemoEmail    = "admin@example.com";
-    private const string DemoPassword = "password123";
-
-    public AuthService(IConfiguration config) => _config = config;
-
-    public string? Login(string email, string password)
+    public async Task<string?> LoginAsync(string email, string password)
     {
-        if (!email.Equals(DemoEmail, StringComparison.OrdinalIgnoreCase) || password != DemoPassword)
+        var user = await db.Users.FirstOrDefaultAsync(u =>
+            u.Email.ToLower() == email.ToLower() && u.IsActive);
+
+        if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             return null;
 
-        var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer:             _config["Jwt:Issuer"],
-            audience:           _config["Jwt:Audience"],
-            claims:             [new Claim(ClaimTypes.Email, email)],
+            issuer:             config["Jwt:Issuer"],
+            audience:           config["Jwt:Audience"],
+            claims:             [
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name,  user.Name),
+                new Claim(ClaimTypes.Role,  user.Role),
+            ],
             expires:            DateTime.UtcNow.AddSeconds(86400),
             signingCredentials: creds);
 

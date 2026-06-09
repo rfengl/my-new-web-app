@@ -1,0 +1,22 @@
+# --- Secrets ---
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+# --- .NET ---
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+
+# --- OS ---
+.DS_Store
+Thumbs.db

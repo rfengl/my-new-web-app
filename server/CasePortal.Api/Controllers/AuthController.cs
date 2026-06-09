@@ -10,9 +10,9 @@ namespace CasePortal.Api.Controllers;
 public class AuthController(IAuthService auth) : ControllerBase
 {
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var token = auth.Login(request.Email, request.Password);
+        var token = await auth.LoginAsync(request.Email, request.Password);
         if (token is null)
             return Unauthorized(new ApiError
             {

@@ -1,6 +1,8 @@
 using System.Text;
+using CasePortal.Api.Data;
 using CasePortal.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,10 +11,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Services (singleton = in-memory store lives for app lifetime)
-builder.Services.AddSingleton<IMembershipService, MembershipService>();
-builder.Services.AddSingleton<ISubmissionService, SubmissionService>();
-builder.Services.AddSingleton<IAuthService, AuthService>();
+// Database
+builder.Services.AddDbContext<CasePortalDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Services
+builder.Services.AddScoped<IMembershipService, MembershipService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<DatabaseSeeder>();
 
 // JWT authentication
 var jwtKey = builder.Configuration["Jwt:Key"]
@@ -45,6 +52,10 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Seed default users on startup
+using (var scope = app.Services.CreateScope())
+    await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
 
 if (app.Environment.IsDevelopment())
 {

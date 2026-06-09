@@ -12,16 +12,16 @@ namespace CasePortal.Api.Controllers;
 public class MembershipsController(IMembershipService memberships) : ControllerBase
 {
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var all = memberships.GetAll().ToList();
+        var all = (await memberships.GetAllAsync()).ToList();
         return Ok(new { data = all, total = all.Count });
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetById(string id)
+    public async Task<IActionResult> GetById(string id)
     {
-        var m = memberships.GetById(id);
+        var m = await memberships.GetByIdAsync(id);
         if (m is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {id} does not exist." });
 
@@ -29,16 +29,16 @@ public class MembershipsController(IMembershipService memberships) : ControllerB
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] CreateMembershipRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateMembershipRequest request)
     {
-        var created = memberships.Create(request);
+        var created = await memberships.CreateAsync(request);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(string id, [FromBody] UpdateMembershipRequest request)
+    public async Task<IActionResult> Update(string id, [FromBody] UpdateMembershipRequest request)
     {
-        var updated = memberships.Update(id, request);
+        var updated = await memberships.UpdateAsync(id, request);
         if (updated is null)
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {id} does not exist." });
 
@@ -46,9 +46,9 @@ public class MembershipsController(IMembershipService memberships) : ControllerB
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(string id)
+    public async Task<IActionResult> Delete(string id)
     {
-        if (!memberships.Delete(id))
+        if (!await memberships.DeleteAsync(id))
             return NotFound(new ApiError { Code = "NOT_FOUND", Message = $"Membership {id} does not exist." });
 
         return NoContent();

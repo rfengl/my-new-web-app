@@ -5,10 +5,10 @@ namespace CasePortal.Api.Services;
 
 public interface IMembershipService
 {
-    IEnumerable<Membership> GetAll();
-    Membership?             GetById(string id);
-    Membership              Create(CreateMembershipRequest request);
-    Membership?             Update(string id, UpdateMembershipRequest request);
-    bool                    Delete(string id);
-    void                    SetSubmissionId(string membershipId, string submissionId);
+    Task<IEnumerable<Membership>> GetAllAsync();
+    Task<Membership?>             GetByIdAsync(string id);
+    Task<Membership>              CreateAsync(CreateMembershipRequest request);
+    Task<Membership?>             UpdateAsync(string id, UpdateMembershipRequest request);
+    Task<bool>                    DeleteAsync(string id);
+    Task                          SetSubmissionIdAsync(string membershipId, string submissionId);
 }

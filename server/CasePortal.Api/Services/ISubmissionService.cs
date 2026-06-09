@@ -5,8 +5,8 @@ namespace CasePortal.Api.Services;
 
 public interface ISubmissionService
 {
-    SubmissionGL? GetById(string id);
-    SubmissionGL? Create(CreateSubmissionRequest request);
-    SubmissionGL? Update(string id, UpdateSubmissionRequest request);
-    bool          Delete(string id);
+    Task<SubmissionGL?> GetByIdAsync(string id);
+    Task<SubmissionGL?> CreateAsync(CreateSubmissionRequest request);
+    Task<SubmissionGL?> UpdateAsync(string id, UpdateSubmissionRequest request);
+    Task<bool>          DeleteAsync(string id);
 }
